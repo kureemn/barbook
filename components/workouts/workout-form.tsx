@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
+import { selectClass } from "@/lib/utils";
 import {
   CATEGORIES,
   createExercise,
@@ -33,8 +34,6 @@ import {
 import { validateExercise, validateWorkout } from "@/lib/validation";
 
 const NEW_EXERCISE = "__new__";
-const selectClass =
-  "h-11 w-full rounded-md border border-input bg-input/30 px-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/40";
 
 type SetRow = {
   key: number;

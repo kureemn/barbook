@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, Square, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatTime, REST_PRESETS, savedRest, secondsLeft } from "@/lib/rest-timer";
+import { cn, selectClass } from "@/lib/utils";
 
 const STORAGE_KEY = "barbook-rest-seconds";
 
@@ -34,7 +35,7 @@ function loadRest() {
 export function useRestTimer() {
   const [endAt, setEndAt] = useState<number | null>(null);
   const [now, setNow] = useState(0);
-  const [finished, setFinished] = useState(false);
+  const [finishedSet, setFinishedSet] = useState<number | null>(null);
   const [restSeconds, setRestSeconds] = useState(loadRest);
   const [activeSet, setActiveSet] = useState<number | null>(null);
   const audio = useRef<AudioContext | null>(null);
@@ -65,7 +66,7 @@ export function useRestTimer() {
       if (current < end) return;
       setEndAt(null);
       setActiveSet(null);
-      setFinished(true);
+      setFinishedSet(activeSet);
       letScreenSleep();
       if (audio.current) beep(audio.current);
       navigator.vibrate?.([300, 150, 300, 150, 300]);
@@ -87,7 +88,7 @@ export function useRestTimer() {
       clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [endAt]);
+  }, [endAt, activeSet]);
 
   useEffect(
     () => () => {
@@ -108,7 +109,7 @@ export function useRestTimer() {
     setNow(current);
     setEndAt(current + restSeconds * 1000);
     setActiveSet(setKey);
-    setFinished(false);
+    setFinishedSet(null);
     void keepScreenOn();
   }
 
@@ -118,13 +119,18 @@ export function useRestTimer() {
     letScreenSleep();
   }
 
+  /** A removed set can't show its timer anymore, so its rest ends with it. */
+  function releaseSet(setKey: number) {
+    if (activeSet === setKey) stop();
+    if (finishedSet === setKey) setFinishedSet(null);
+  }
+
   function addThirtySeconds() {
     setEndAt((current) => (current === null ? null : current + 30_000));
   }
 
   function chooseRest(seconds: number) {
     setRestSeconds(seconds);
-    setFinished(false);
     try {
       localStorage.setItem(STORAGE_KEY, String(seconds));
     } catch {
@@ -135,11 +141,12 @@ export function useRestTimer() {
   return {
     running: endAt !== null,
     timeLeft: endAt === null ? 0 : secondsLeft(endAt, now),
-    finished,
+    finishedSet,
     restSeconds,
     activeSet,
     start,
     stop,
+    releaseSet,
     addThirtySeconds,
     chooseRest,
   };
@@ -147,8 +154,8 @@ export function useRestTimer() {
 
 export type RestTimerState = ReturnType<typeof useRestTimer>;
 
-/** Sits under a set: starts the rest, then shows its countdown. */
-export function SetRestButton({
+/** Sits under a set: starts the rest, then shows its countdown and the alert. */
+export function SetRest({
   timer,
   setKey,
   setNumber,
@@ -159,82 +166,70 @@ export function SetRestButton({
 }) {
   if (timer.activeSet === setKey) {
     return (
-      <p className="flex min-h-11 items-center gap-2 text-sm font-medium tabular-nums">
-        <Timer className="size-4" aria-hidden="true" />
-        Resting: {formatTime(timer.timeLeft)}
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-2xl font-semibold tabular-nums">
+          <span className="sr-only">Rest time left: </span>
+          {formatTime(timer.timeLeft)}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            aria-label="Add 30 seconds"
+            onClick={timer.addThirtySeconds}
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            30s
+          </Button>
+          <Button type="button" variant="outline" onClick={timer.stop}>
+            <Square className="size-4" aria-hidden="true" />
+            Stop
+          </Button>
+        </div>
+      </div>
     );
   }
+
   return (
-    <Button
-      type="button"
-      variant="outline"
-      className="w-full tabular-nums"
-      aria-label={`Start ${formatTime(timer.restSeconds)} rest after set ${setNumber}`}
-      onClick={() => timer.start(setKey)}
-    >
-      <Timer className="size-4" aria-hidden="true" />
-      Rest {formatTime(timer.restSeconds)}
-    </Button>
+    <div className="flex flex-col gap-2">
+      {timer.finishedSet === setKey && (
+        <p className="rounded-md bg-primary px-3 py-2 font-semibold text-primary-foreground">
+          Rest over. Time for your next set.
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          aria-label={`Start ${formatTime(timer.restSeconds)} rest after set ${setNumber}`}
+          onClick={() => timer.start(setKey)}
+        >
+          <Timer className="size-4" aria-hidden="true" />
+          Rest
+        </Button>
+        <select
+          aria-label={`Rest length for set ${setNumber}`}
+          className={cn(selectClass, "w-24 tabular-nums")}
+          value={timer.restSeconds}
+          onChange={(e) => timer.chooseRest(Number(e.target.value))}
+        >
+          {REST_PRESETS.map((seconds) => (
+            <option key={seconds} value={seconds}>
+              {formatTime(seconds)}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
   );
 }
 
-/** Stays on screen while scrolling: the time left, or the choice of rest length. */
-export function RestTimerBar({ timer }: { timer: RestTimerState }) {
+/** Tells screen readers when a rest ends, without reading out every second. */
+export function RestAnnouncement({ timer }: { timer: RestTimerState }) {
   return (
-    <section
-      aria-label="Rest timer"
-      className={`sticky bottom-0 z-10 -mx-4 mt-6 border-t px-4 py-3 ${
-        timer.finished ? "bg-primary text-primary-foreground" : "bg-card"
-      }`}
-    >
-      {/* Announces the end only, not every second. */}
-      <p role="status" className={timer.finished ? "mb-2 font-semibold" : "sr-only"}>
-        {timer.finished ? "Rest over. Time for your next set." : ""}
-      </p>
-      {timer.running ? (
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-3xl font-semibold tabular-nums">
-            <span className="sr-only">Rest time left: </span>
-            {formatTime(timer.timeLeft)}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              aria-label="Add 30 seconds"
-              onClick={timer.addThirtySeconds}
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              30s
-            </Button>
-            <Button type="button" variant="outline" onClick={timer.stop}>
-              <Square className="size-4" aria-hidden="true" />
-              Stop
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3">
-          <p id="rest-length" className="shrink-0 text-sm font-medium">
-            Rest
-          </p>
-          <div role="group" aria-labelledby="rest-length" className="grid flex-1 grid-cols-4 gap-2">
-            {REST_PRESETS.map((seconds) => (
-              <Button
-                key={seconds}
-                type="button"
-                variant={seconds === timer.restSeconds ? "secondary" : "outline"}
-                className="px-1 tabular-nums text-foreground"
-                aria-pressed={seconds === timer.restSeconds}
-                onClick={() => timer.chooseRest(seconds)}
-              >
-                {formatTime(seconds)}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-    </section>
+    <p role="status" className="sr-only">
+      {timer.finishedSet !== null ? "Rest over. Time for your next set." : ""}
+    </p>
   );
 }

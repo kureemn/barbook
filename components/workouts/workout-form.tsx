@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AddExerciseDialog } from "@/components/workouts/add-exercise-dialog";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
-import { RestTimerBar, SetRestButton, useRestTimer } from "@/components/workouts/rest-timer";
+import { RestAnnouncement, SetRest, useRestTimer } from "@/components/workouts/rest-timer";
 import { flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
 import type { Suggestion } from "@/lib/suggestions";
 import type { Template } from "@/lib/templates";
@@ -166,6 +166,7 @@ export function WorkoutForm({
   }
 
   function removeSet(groupKey: number, setKey: number) {
+    timer.releaseSet(setKey);
     setGroups((current) =>
       current.map((group) =>
         group.key === groupKey
@@ -421,7 +422,7 @@ export function WorkoutForm({
                             </Button>
                           </div>
                           <div className="mt-2">
-                            <SetRestButton
+                            <SetRest
                               timer={timer}
                               setKey={set.key}
                               setNumber={setIndex + 1}
@@ -447,9 +448,10 @@ export function WorkoutForm({
                     <Button
                       type="button"
                       variant="ghost"
-                      onClick={() =>
-                        setGroups((current) => current.filter((item) => item.key !== group.key))
-                      }
+                      onClick={() => {
+                        group.sets.forEach((set) => timer.releaseSet(set.key));
+                        setGroups((current) => current.filter((item) => item.key !== group.key));
+                      }}
                     >
                       <Trash2 className="size-4" aria-hidden="true" />
                       Remove exercise {groupIndex + 1}
@@ -481,7 +483,7 @@ export function WorkoutForm({
         </div>
       </form>
 
-      <RestTimerBar timer={timer} />
+      <RestAnnouncement timer={timer} />
 
       <AddExerciseDialog
         open={newExerciseFor !== null}

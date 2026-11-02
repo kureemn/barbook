@@ -88,6 +88,48 @@ create table if not exists stars (
     references workouts (id, user_id) on delete cascade
 );
 
+-- Templates: a reusable program day, such as "Squat day".
+create table if not exists templates (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.user_id()::uuid references neon_auth."user" (id) on delete cascade,
+  name        text not null,
+  notes       text,
+  created_at  timestamptz not null default now(),
+
+  constraint templates_name_not_blank check (length(btrim(name)) > 0),
+  constraint templates_id_owner_unique unique (id, user_id)
+);
+
+-- Template exercises: one row per exercise in a template, with its targets.
+create table if not exists template_exercises (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null default auth.user_id()::uuid references neon_auth."user" (id) on delete cascade,
+  template_id  uuid not null,
+  exercise_id  uuid not null,
+  position     integer not null,
+  target_sets  integer not null,
+  target_reps  integer not null,
+  target_rpe   numeric(3, 1),
+
+  constraint template_exercises_template_fk foreign key (template_id, user_id)
+    references templates (id, user_id) on delete cascade,
+  constraint template_exercises_exercise_fk foreign key (exercise_id, user_id)
+    references exercises (id, user_id) on delete restrict,
+  constraint template_exercises_position_positive check (position > 0),
+  constraint template_exercises_sets_range check (target_sets between 1 and 20),
+  constraint template_exercises_reps_positive check (target_reps > 0),
+  constraint template_exercises_rpe_range check (target_rpe is null or target_rpe between 6 and 10)
+);
+
+create index if not exists template_exercises_template_idx on template_exercises (template_id);
+
+-- A workout can remember the template it started from. Deleting a template
+-- keeps the workout: only template_id is cleared, not user_id.
+alter table workouts add column if not exists template_id uuid;
+alter table workouts drop constraint if exists workouts_template_fk;
+alter table workouts add constraint workouts_template_fk foreign key (template_id, user_id)
+  references templates (id, user_id) on delete set null (template_id);
+
 -- Row Level Security: a signed-in user reaches only rows where user_id is theirs.
 -- USING picks which existing rows qualify. WITH CHECK tests the row after a
 -- write, so nobody can hand a row to another account.
@@ -95,7 +137,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['exercises', 'workouts', 'workout_sets'] loop
+  foreach t in array array['exercises', 'workouts', 'workout_sets', 'templates', 'template_exercises'] loop
     execute format('alter table %I enable row level security', t);
 
     execute format('drop policy if exists %I on %I', t || '_select_own', t);

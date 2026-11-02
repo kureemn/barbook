@@ -82,6 +82,49 @@ const exerciseSchema = z.object({
   name: z.string().trim().min(1, "Enter a name for this exercise."),
 });
 
+const templateExerciseSchema = z
+  .object({
+    exercise_id: z.string().min(1, "Choose an exercise."),
+    target_sets: z
+      .string()
+      .refine((text) => !isBlank(text), "Enter the number of sets.")
+      .refine(
+        (text) =>
+          isBlank(text) || (Number.isInteger(number(text)) && number(text) >= 1 && number(text) <= 20),
+        "Sets must be a whole number from 1 to 20."
+      ),
+    target_reps: z
+      .string()
+      .refine((text) => !isBlank(text), "Enter the reps.")
+      .refine(
+        (text) => isBlank(text) || (Number.isInteger(number(text)) && number(text) >= 1),
+        "Reps must be a whole number, 1 or more."
+      ),
+    target_rpe: z
+      .string()
+      .refine(
+        (text) =>
+          isBlank(text) ||
+          (number(text) >= 6 && number(text) <= 10 && Number.isInteger(number(text) * 2)),
+        "RPE must be from 6 to 10, in steps of 0.5."
+      ),
+  })
+  .transform((exercise) => ({
+    exercise_id: exercise.exercise_id,
+    target_sets: number(exercise.target_sets),
+    target_reps: number(exercise.target_reps),
+    target_rpe: isBlank(exercise.target_rpe) ? null : number(exercise.target_rpe),
+  }));
+
+const templateSchema = z.object({
+  name: z.string().trim().min(1, "Give this template a name."),
+  notes: z
+    .string()
+    .trim()
+    .transform((text) => (text === "" ? null : text)),
+  exercises: z.array(templateExerciseSchema).min(1, "Add at least one exercise."),
+});
+
 export type FieldErrors = Record<string, string>;
 
 /** Runs a schema and returns errors keyed by field path, like "sets.0.weight". */
@@ -102,3 +145,4 @@ export const validateWorkout = (input: unknown) => validate(workoutSchema, input
 export const validateSignUp = (input: unknown) => validate(signUpSchema, input);
 export const validateSignIn = (input: unknown) => validate(signInSchema, input);
 export const validateExercise = (input: unknown) => validate(exerciseSchema, input);
+export const validateTemplate = (input: unknown) => validate(templateSchema, input);

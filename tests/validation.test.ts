@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { validateExercise, validateSignIn, validateSignUp, validateWorkout } from "../lib/validation";
+import {
+  validateExercise,
+  validateSignIn,
+  validateSignUp,
+  validateTemplate,
+  validateWorkout,
+} from "../lib/validation";
 
 const set = { exercise_id: "squat", weight: "300", reps: "5", rpe: "8", is_warmup: false };
 const workout = {
@@ -92,5 +98,50 @@ describe("account forms", () => {
 describe("validateExercise", () => {
   it("rejects a blank name", () => {
     expect(validateExercise({ name: "  " }).errors.name).toBe("Enter a name for this exercise.");
+  });
+});
+
+describe("validateTemplate", () => {
+  const exercise = { exercise_id: "squat", target_sets: "3", target_reps: "5", target_rpe: "8" };
+  const template = { name: "Squat day", notes: "", exercises: [exercise] };
+
+  it("accepts a complete template and converts its numbers", () => {
+    const result = validateTemplate(template);
+    expect(result.success).toBe(true);
+    expect(result.data?.notes).toBeNull();
+    expect(result.data?.exercises[0]).toEqual({
+      exercise_id: "squat",
+      target_sets: 3,
+      target_reps: 5,
+      target_rpe: 8,
+    });
+  });
+
+  it("accepts an exercise with no target RPE", () => {
+    const result = validateTemplate({ ...template, exercises: [{ ...exercise, target_rpe: "" }] });
+    expect(result.data?.exercises[0].target_rpe).toBeNull();
+  });
+
+  it("requires a name", () => {
+    expect(validateTemplate({ ...template, name: "  " }).errors.name).toBe("Give this template a name.");
+  });
+
+  it("requires at least one exercise", () => {
+    expect(validateTemplate({ ...template, exercises: [] }).errors.exercises).toBe(
+      "Add at least one exercise."
+    );
+  });
+
+  it.each([
+    ["exercise_id", "", "Choose an exercise."],
+    ["target_sets", "", "Enter the number of sets."],
+    ["target_sets", "21", "Sets must be a whole number from 1 to 20."],
+    ["target_sets", "2.5", "Sets must be a whole number from 1 to 20."],
+    ["target_reps", "", "Enter the reps."],
+    ["target_reps", "0", "Reps must be a whole number, 1 or more."],
+    ["target_rpe", "11", "RPE must be from 6 to 10, in steps of 0.5."],
+  ])("rejects %s of %j", (field, value, message) => {
+    const result = validateTemplate({ ...template, exercises: [{ ...exercise, [field]: value }] });
+    expect(result.errors[`exercises.0.${field}`]).toBe(message);
   });
 });

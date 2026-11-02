@@ -13,3 +13,9 @@ I also considered an AI coach, but the agent laid out that it would need a paid 
 ## What the agent did
 
 It added a timer bar to the workout form with one-tap presets, +30 seconds, and an alert at the end, and it works from the end time so it stays correct if the phone pauses the page. It tested it through my real login, but it can't hear a beep or feel a vibration, so those are for me to check on my phone.
+
+## Moving the timer to each set
+
+> the timer should be after each set. So
+
+The message was cut off. The agent took it to mean each set should have its own way to start a rest, and asked me to correct it if I meant something else. It added a Rest button under every set. I pick the rest length once in the bottom bar, and the app remembers it.

@@ -13,10 +13,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { AddExerciseDialog } from "@/components/workouts/add-exercise-dialog";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
+import type { Suggestion } from "@/lib/suggestions";
 import type { Template } from "@/lib/templates";
 import { selectClass } from "@/lib/utils";
 import {
   createWorkout,
+  formatDate,
   loadExercises,
   todayLocal,
   updateWorkout,
@@ -40,6 +42,8 @@ type ExerciseGroup = {
   key: number;
   exercise_id: string;
   sets: SetRow[];
+  suggestion?: Suggestion;
+  target?: { reps: number; rpe: number | null };
 };
 
 function blankSet(key: number): SetRow {
@@ -47,13 +51,22 @@ function blankSet(key: number): SetRow {
 }
 
 /** Starts from the saved sets, the template's targets, or one empty exercise. */
-function startingGroups(workout?: Workout, template?: Template): ExerciseGroup[] {
+function startingGroups(
+  workout?: Workout,
+  template?: Template,
+  suggestions: Record<string, Suggestion> = {}
+): ExerciseGroup[] {
   let setKey = 0;
   if (template) {
-    return setsFromTemplate(template.template_exercises).map((group, index) => ({
+    const targets = template.template_exercises;
+    return setsFromTemplate(targets, (exercise) =>
+      exercise.id ? suggestions[exercise.id]?.weight : undefined
+    ).map((group, index) => ({
       key: index,
       exercise_id: group.exercise_id,
       sets: group.sets.map((set) => ({ ...set, key: setKey++ })),
+      suggestion: suggestions[targets[index].id],
+      target: { reps: targets[index].target_reps, rpe: targets[index].target_rpe },
     }));
   }
   if (!workout) return [{ key: 0, exercise_id: "", sets: [blankSet(0)] }];
@@ -71,9 +84,17 @@ function startingGroups(workout?: Workout, template?: Template): ExerciseGroup[]
   }));
 }
 
-export function WorkoutForm({ workout, template }: { workout?: Workout; template?: Template }) {
+export function WorkoutForm({
+  workout,
+  template,
+  suggestions,
+}: {
+  workout?: Workout;
+  template?: Template;
+  suggestions?: Record<string, Suggestion>;
+}) {
   const router = useRouter();
-  const [groups, setGroups] = useState(() => startingGroups(workout, template));
+  const [groups, setGroups] = useState(() => startingGroups(workout, template, suggestions));
   // Past every starting key, since each group has at least one set.
   const nextKey = useRef(groups.reduce((total, group) => total + group.sets.length, 0));
   const [exercises, setExercises] = useState<Exercise[] | null>(null);
@@ -196,8 +217,8 @@ export function WorkoutForm({ workout, template }: { workout?: Workout; template
       </h1>
       {template && (
         <p className="mt-2 text-sm text-muted-foreground">
-          Started from {template.name}. Your targets are filled in, so enter your weights and change
-          anything that differed.
+          Started from {template.name}. Your targets and any suggested weights are filled in, so
+          change anything that differed.
         </p>
       )}
 
@@ -273,7 +294,11 @@ export function WorkoutForm({ workout, template }: { workout?: Workout; template
                       if (e.target.value === NEW_EXERCISE) {
                         setNewExerciseFor(group.key);
                       } else {
-                        changeGroup(group.key, { exercise_id: e.target.value });
+                        // A suggestion belongs to the exercise it was worked out for.
+                        changeGroup(group.key, {
+                          exercise_id: e.target.value,
+                          suggestion: undefined,
+                        });
                       }
                     }}
                   >
@@ -289,6 +314,16 @@ export function WorkoutForm({ workout, template }: { workout?: Workout; template
                   </select>
                   <FieldError id={`exercise-error-${group.key}`} message={exerciseError} />
                 </div>
+                {group.suggestion && group.target && (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Suggested {group.suggestion.weight} lb for {group.target.reps} reps
+                    {group.target.rpe !== null && ` at RPE ${Number(group.target.rpe)}`}. Based on{" "}
+                    {Number(group.suggestion.basedOn.weight)} lb × {group.suggestion.basedOn.reps}
+                    {group.suggestion.basedOn.rpe !== null &&
+                      ` at RPE ${Number(group.suggestion.basedOn.rpe)}`}{" "}
+                    on {formatDate(group.suggestion.basedOn.performed_on)}.
+                  </p>
+                )}
 
                 <ol className="mt-4 flex flex-col gap-4">
                   {group.sets.map((set, setIndex) => {
@@ -442,7 +477,9 @@ export function WorkoutForm({ workout, template }: { workout?: Workout; template
         onClose={() => setNewExerciseFor(null)}
         onCreated={(created) => {
           setExercises((current) => [...(current ?? []), created]);
-          if (newExerciseFor !== null) changeGroup(newExerciseFor, { exercise_id: created.id });
+          if (newExerciseFor !== null) {
+            changeGroup(newExerciseFor, { exercise_id: created.id, suggestion: undefined });
+          }
         }}
       />
     </main>

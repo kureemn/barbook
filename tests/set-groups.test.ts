@@ -51,6 +51,18 @@ describe("setsFromTemplate", () => {
     expect(groups).toEqual([{ exercise_id: "squat", sets: [planned, planned] }]);
   });
 
+  it("fills in a suggested weight on every set of that exercise", () => {
+    const groups = setsFromTemplate(
+      [
+        { id: "a", exercise_id: "squat", target_sets: 2, target_reps: 5, target_rpe: 8 },
+        { id: "b", exercise_id: "bench", target_sets: 1, target_reps: 5, target_rpe: 8 },
+      ],
+      (exercise) => (exercise.id === "a" ? 305 : undefined)
+    );
+    expect(groups[0].sets.map((set) => set.weight)).toEqual(["305", "305"]);
+    expect(groups[1].sets[0].weight).toBe("");
+  });
+
   it("leaves RPE blank when the template has no target", () => {
     const groups = setsFromTemplate([
       { exercise_id: "squat", target_sets: 1, target_reps: 5, target_rpe: null },

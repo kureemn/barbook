@@ -19,3 +19,9 @@ It added a timer bar to the workout form with one-tap presets, +30 seconds, and 
 > the timer should be after each set. So
 
 The message was cut off. The agent took it to mean each set should have its own way to start a rest, and asked me to correct it if I meant something else. It added a Rest button under every set. I pick the rest length once in the bottom bar, and the app remembers it.
+
+## Keeping it in one place
+
+> It's setup weird, the rest button at the bottom but alsoembedded in the sets
+
+The agent removed the bottom bar. Everything now sits under each set: a Rest button with a length menu, then the countdown with +30 seconds and Stop.

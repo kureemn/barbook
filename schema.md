@@ -41,6 +41,7 @@ One training session on one date.
 | `performed_on` | date | Required |
 | `bodyweight` | number | Optional |
 | `notes` | text | Optional |
+| `template_id` | uuid | Optional, links to the template it started from |
 | `created_at` | timestamp | |
 
 ### workout_sets
@@ -69,13 +70,42 @@ One table for everyone. Each row means "this user starred this workout".
 | `workout_id` | uuid | Part of the primary key, links to workouts |
 | `created_at` | timestamp | |
 
+### templates
+
+A reusable program day.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | Owner, links to users |
+| `name` | text | Required |
+| `notes` | text | Optional |
+| `created_at` | timestamp | |
+
+### template_exercises
+
+One row per exercise in a template, with its targets.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | Owner, links to users |
+| `template_id` | uuid | Links to templates |
+| `exercise_id` | uuid | Links to exercises |
+| `position` | number | Order in the template, above 0 |
+| `target_sets` | number | 1 to 20 |
+| `target_reps` | number | Above 0 |
+| `target_rpe` | number | Optional, 6 to 10 |
+
 ## How they relate
 
-- A user has many exercises and many workouts (one-to-many).
+- A user has many exercises, workouts, and templates (one-to-many).
 - A workout has many sets, and an exercise appears in many sets (one-to-many each). Together, `workout_sets` connects workouts and exercises many-to-many.
 - `stars` connects users and workouts many-to-many, as a junction table. A user can star a workout only once, and only their own.
 - Deleting a workout deletes its sets and stars. An exercise that has sets can't be deleted.
-- A set's workout and exercise must have the same owner as the set.
+- A template has many template exercises, and a workout can optionally come from one template.
+- Deleting a template deletes its template exercises. Workouts started from it stay, with `template_id` cleared. An exercise used in a template can't be deleted.
+- A set's workout and exercise must have the same owner as the set, and the same applies to template exercises and a workout's template.
 
 ```mermaid
 erDiagram
@@ -85,6 +115,10 @@ erDiagram
     exercises ||--o{ workout_sets : "performed in"
     users ||--o{ stars : gives
     workouts ||--o{ stars : receives
+    users ||--o{ templates : builds
+    templates ||--o{ template_exercises : lists
+    exercises ||--o{ template_exercises : "planned in"
+    templates |o--o{ workouts : starts
 ```
 
 ## Who can see what
@@ -109,4 +143,4 @@ Mostly, with these differences from PLAN.md section 3:
 | `users` is a regular table | Lives in Neon Auth's `neon_auth` schema | Neon Auth creates and manages it |
 | IDs are text | `uuid` | Neon Auth's user id is a uuid, and the database can validate it |
 | `created_at` is a date | Date and time | Keeps the exact moment a row was created |
-| All tables in this feature | `templates` and `template_exercises` arrive with feature 8, along with `workouts.template_id` | One feature per PR |
+| `template_exercises.target_sets` is any number | Limited to 1 to 20 | Starting a workout creates one row per target set, so this keeps the form usable |

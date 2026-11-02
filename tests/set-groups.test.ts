@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { flattenGroups, groupByExercise } from "@/lib/set-groups";
+import { flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
 
 const set = (exercise_id: string, weight: number) => ({ exercise_id, weight });
 
@@ -39,5 +39,38 @@ describe("flattenGroups", () => {
   it("undoes groupByExercise", () => {
     const sets = [set("squat", 225), set("rdl", 135), set("squat", 125)];
     expect(flattenGroups(groupByExercise(sets))).toEqual(sets);
+  });
+});
+
+describe("setsFromTemplate", () => {
+  it("makes the target number of sets, with reps and RPE filled in and weight blank", () => {
+    const groups = setsFromTemplate([
+      { exercise_id: "squat", target_sets: 2, target_reps: 5, target_rpe: 8 },
+    ]);
+    const planned = { weight: "", reps: "5", rpe: "8", is_warmup: false };
+    expect(groups).toEqual([{ exercise_id: "squat", sets: [planned, planned] }]);
+  });
+
+  it("leaves RPE blank when the template has no target", () => {
+    const groups = setsFromTemplate([
+      { exercise_id: "squat", target_sets: 1, target_reps: 5, target_rpe: null },
+    ]);
+    expect(groups[0].sets[0].rpe).toBe("");
+  });
+
+  it("shows a decimal RPE from the database without trailing zeros", () => {
+    const fromDatabase = "7.50" as unknown as number;
+    const groups = setsFromTemplate([
+      { exercise_id: "squat", target_sets: 1, target_reps: 5, target_rpe: fromDatabase },
+    ]);
+    expect(groups[0].sets[0].rpe).toBe("7.5");
+  });
+
+  it("keeps the template's exercise order", () => {
+    const groups = setsFromTemplate([
+      { exercise_id: "bench", target_sets: 1, target_reps: 5, target_rpe: null },
+      { exercise_id: "squat", target_sets: 1, target_reps: 5, target_rpe: null },
+    ]);
+    expect(groups.map((group) => group.exercise_id)).toEqual(["bench", "squat"]);
   });
 });

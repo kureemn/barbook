@@ -7,32 +7,23 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { errorProps, FieldError, focusFirstError } from "@/components/field-error";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AddExerciseDialog } from "@/components/workouts/add-exercise-dialog";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
-import { flattenGroups, groupByExercise } from "@/lib/set-groups";
+import { flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
+import type { Template } from "@/lib/templates";
 import { selectClass } from "@/lib/utils";
 import {
-  CATEGORIES,
-  createExercise,
   createWorkout,
   loadExercises,
   todayLocal,
   updateWorkout,
-  type Category,
   type Exercise,
   type Workout,
 } from "@/lib/workouts";
-import { validateExercise, validateWorkout } from "@/lib/validation";
+import { validateWorkout } from "@/lib/validation";
 
 const NEW_EXERCISE = "__new__";
 
@@ -55,10 +46,17 @@ function blankSet(key: number): SetRow {
   return { key, weight: "", reps: "", rpe: "", is_warmup: false };
 }
 
-/** Starts from the saved sets, or one empty exercise for a new workout. */
-function startingGroups(workout?: Workout): ExerciseGroup[] {
-  if (!workout) return [{ key: 0, exercise_id: "", sets: [blankSet(0)] }];
+/** Starts from the saved sets, the template's targets, or one empty exercise. */
+function startingGroups(workout?: Workout, template?: Template): ExerciseGroup[] {
   let setKey = 0;
+  if (template) {
+    return setsFromTemplate(template.template_exercises).map((group, index) => ({
+      key: index,
+      exercise_id: group.exercise_id,
+      sets: group.sets.map((set) => ({ ...set, key: setKey++ })),
+    }));
+  }
+  if (!workout) return [{ key: 0, exercise_id: "", sets: [blankSet(0)] }];
   return groupByExercise(workout.workout_sets).map((group, index) => ({
     key: index,
     exercise_id: group.exercise_id,
@@ -73,26 +71,22 @@ function startingGroups(workout?: Workout): ExerciseGroup[] {
   }));
 }
 
-export function WorkoutForm({ workout }: { workout?: Workout }) {
+export function WorkoutForm({ workout, template }: { workout?: Workout; template?: Template }) {
   const router = useRouter();
+  const [groups, setGroups] = useState(() => startingGroups(workout, template));
   // Past every starting key, since each group has at least one set.
-  const nextKey = useRef(Math.max(workout?.workout_sets.length ?? 0, 1));
+  const nextKey = useRef(groups.reduce((total, group) => total + group.sets.length, 0));
   const [exercises, setExercises] = useState<Exercise[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [title, setTitle] = useState(workout?.title ?? "");
+  const [title, setTitle] = useState(workout?.title ?? template?.name ?? "");
   const [performedOn, setPerformedOn] = useState(workout?.performed_on ?? todayLocal());
   const [bodyweight, setBodyweight] = useState(workout?.bodyweight?.toString() ?? "");
   const [notes, setNotes] = useState(workout?.notes ?? "");
-  const [groups, setGroups] = useState(() => startingGroups(workout));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   // Messages wait for the first save attempt, then update as fields change.
   const [attempted, setAttempted] = useState(false);
   const [newExerciseFor, setNewExerciseFor] = useState<number | null>(null);
-  const [newName, setNewName] = useState("");
-  const [newCategory, setNewCategory] = useState<Category>("accessory");
-  const [newExerciseError, setNewExerciseError] = useState<string | null>(null);
-  const [newExerciseAttempted, setNewExerciseAttempted] = useState(false);
 
   const validation = validateWorkout({
     title,
@@ -110,9 +104,6 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
   });
   const errors = attempted ? validation.errors : {};
   const hasErrors = Object.keys(errors).length > 0;
-  const newExerciseNameError = newExerciseAttempted
-    ? validateExercise({ name: newName }).errors.name
-    : undefined;
 
   useEffect(() => {
     loadExercises()
@@ -171,27 +162,6 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
     ]);
   }
 
-  async function handleAddExercise() {
-    setNewExerciseError(null);
-    setNewExerciseAttempted(true);
-    const result = validateExercise({ name: newName });
-    if (!result.success) {
-      focusFirstError();
-      return;
-    }
-    try {
-      const created = await createExercise(result.data.name, newCategory);
-      setExercises((current) => [...(current ?? []), created]);
-      if (newExerciseFor !== null) changeGroup(newExerciseFor, { exercise_id: created.id });
-      setNewExerciseFor(null);
-      setNewName("");
-      setNewCategory("accessory");
-      setNewExerciseAttempted(false);
-    } catch {
-      setNewExerciseError("Couldn't add that exercise. It may already be on your list.");
-    }
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -207,7 +177,7 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
         await updateWorkout(workout.id, details, sets);
         router.replace(`/workouts/${workout.id}`);
       } else {
-        const id = await createWorkout(details, sets);
+        const id = await createWorkout({ ...details, template_id: template?.id ?? null }, sets);
         router.replace(`/workouts/${id}`);
       }
     } catch {
@@ -224,6 +194,12 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
       <h1 className="text-2xl font-semibold tracking-tight">
         {workout ? "Edit workout" : "Add workout"}
       </h1>
+      {template && (
+        <p className="mt-2 text-sm text-muted-foreground">
+          Started from {template.name}. Your targets are filled in, so enter your weights and change
+          anything that differed.
+        </p>
+      )}
 
       <form noValidate onSubmit={handleSubmit} className="mt-6 flex flex-col gap-6">
         {(error || hasErrors) && (
@@ -295,8 +271,6 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
                     value={group.exercise_id}
                     onChange={(e) => {
                       if (e.target.value === NEW_EXERCISE) {
-                        setNewExerciseError(null);
-                        setNewExerciseAttempted(false);
                         setNewExerciseFor(group.key);
                       } else {
                         changeGroup(group.key, { exercise_id: e.target.value });
@@ -463,55 +437,14 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
         </div>
       </form>
 
-      <Dialog
+      <AddExerciseDialog
         open={newExerciseFor !== null}
-        onOpenChange={(open) => {
-          if (!open) setNewExerciseFor(null);
+        onClose={() => setNewExerciseFor(null)}
+        onCreated={(created) => {
+          setExercises((current) => [...(current ?? []), created]);
+          if (newExerciseFor !== null) changeGroup(newExerciseFor, { exercise_id: created.id });
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add exercise</DialogTitle>
-            <DialogDescription>It stays on your list for future workouts.</DialogDescription>
-          </DialogHeader>
-          {newExerciseError && (
-            <Alert variant="destructive">
-              <AlertDescription>{newExerciseError}</AlertDescription>
-            </Alert>
-          )}
-          <div className="grid gap-2">
-            <Label htmlFor="new-exercise-name">Name</Label>
-            <Input
-              id="new-exercise-name"
-              required
-              {...errorProps("new-exercise-name-error", newExerciseNameError)}
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <FieldError id="new-exercise-name-error" message={newExerciseNameError} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="new-exercise-category">Category</Label>
-            <select
-              id="new-exercise-category"
-              className={selectClass}
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value as Category)}
-            >
-              {CATEGORIES.map((category) => (
-                <option key={category} value={category}>
-                  {category[0].toUpperCase() + category.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <DialogFooter>
-            <Button type="button" onClick={handleAddExercise}>
-              Add exercise
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      />
     </main>
   );
 }

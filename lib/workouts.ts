@@ -41,6 +41,7 @@ export type WorkoutInput = {
   performed_on: string;
   bodyweight: number | null;
   notes: string | null;
+  template_id?: string | null;
 };
 
 export type SetInput = {

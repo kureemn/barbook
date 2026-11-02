@@ -112,8 +112,27 @@ try {
   await expectBlocked("an exercise with sets can't be deleted",
     "delete from exercises where id = $1", [exercise.id], "23001");
 
+  const template = (
+    await client.query("insert into templates (name) values ('Squat day') returning id")
+  ).rows[0];
+  await client.query(
+    "insert into template_exercises (template_id, exercise_id, position, target_sets, target_reps, target_rpe) values ($1, $2, 1, 3, 5, 8)",
+    [template.id, exercise.id]
+  );
+  await client.query("update workouts set template_id = $1 where id = $2", [template.id, workout.id]);
+  report("User A can link a workout to their template",
+    (await countRows("select * from workouts where template_id = $1", [template.id])) === 1);
+  await expectBlocked("blank template name is rejected",
+    "insert into templates (name) values ('  ')", [], "23514");
+  await expectBlocked("target RPE above 10 is rejected",
+    "insert into template_exercises (template_id, exercise_id, position, target_sets, target_reps, target_rpe) values ($1, $2, 2, 3, 5, 11)",
+    [template.id, exercise.id], "23514");
+  await expectBlocked("zero target sets is rejected",
+    "insert into template_exercises (template_id, exercise_id, position, target_sets, target_reps) values ($1, $2, 2, 0, 5)",
+    [template.id, exercise.id], "23514");
+
   await actAs("authenticated", USER_B);
-  for (const table of ["workouts", "exercises", "workout_sets", "stars"]) {
+  for (const table of ["workouts", "exercises", "workout_sets", "stars", "templates", "template_exercises"]) {
     report(`User B sees none of User A's ${table}`, (await countRows(`select * from ${table}`)) === 0);
   }
   report("User B can't open User A's workout by id",
@@ -138,6 +157,23 @@ try {
   report("User B's delete of User A's star changes nothing",
     (await countRows("delete from stars where workout_id = $1", [workout.id])) === 0);
 
+  const ownWorkout = (
+    await client.query("insert into workouts (title, performed_on) values ('Mine', '2026-11-01') returning id")
+  ).rows[0];
+  await expectBlocked("User B can't link a workout to User A's template",
+    "update workouts set template_id = $1 where id = $2", [template.id, ownWorkout.id], "23503");
+  const ownTemplate = (
+    await client.query("insert into templates (name) values ('Mine') returning id")
+  ).rows[0];
+  await expectBlocked("User B can't add an exercise to User A's template",
+    "insert into template_exercises (template_id, exercise_id, position, target_sets, target_reps) values ($1, $2, 1, 3, 5)",
+    [template.id, ownExercise.id], "23503");
+  await expectBlocked("User B can't use User A's exercise in a template",
+    "insert into template_exercises (template_id, exercise_id, position, target_sets, target_reps) values ($1, $2, 1, 3, 5)",
+    [ownTemplate.id, exercise.id], "23503");
+  report("User B's delete of User A's template changes nothing",
+    (await countRows("delete from templates where id = $1", [template.id])) === 0);
+
   await actAs("authenticated", null);
   report("a request with no user sees nothing", (await countRows("select * from workouts")) === 0);
 
@@ -153,6 +189,12 @@ try {
   report("a logged-out visitor sees nothing", anonymousRows === 0);
 
   await actAs("authenticated", USER_A);
+  await client.query("delete from templates where id = $1", [template.id]);
+  const kept = (await client.query("select user_id, template_id from workouts where id = $1", [workout.id])).rows[0];
+  report("deleting a template keeps its workouts and clears the link",
+    kept?.user_id === USER_A && kept?.template_id === null);
+  report("deleting a template deletes its exercises",
+    (await countRows("select * from template_exercises where template_id = $1", [template.id])) === 0);
   const title = (await client.query("select title from workouts where id = $1", [workout.id])).rows[0]?.title;
   report("User A's workout is unchanged", title === "Day 1");
   await client.query("delete from workouts where id = $1", [workout.id]);

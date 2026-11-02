@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { client } from "@/lib/neon/client";
+import { retry } from "@/lib/retry";
 
 type GuardStatus = "checking" | "authed" | "anonymous";
 
@@ -24,10 +25,16 @@ function useAuthStatus(): GuardStatus {
 
   useEffect(() => {
     let cancelled = false;
-    client.auth.getSession().then(({ data }) => {
-      if (cancelled) return;
-      setStatus(data?.user ? "authed" : "anonymous");
-    });
+    // The session hook and this call share one request, and the hook aborts it
+    // when the page regains focus. Without a retry, this would never settle and
+    // the page would stay on its loading spinner.
+    retry(() => client.auth.getSession())
+      .then(({ data }) => {
+        if (!cancelled) setStatus(data?.user ? "authed" : "anonymous");
+      })
+      .catch(() => {
+        if (!cancelled) setStatus("anonymous");
+      });
     return () => {
       cancelled = true;
     };

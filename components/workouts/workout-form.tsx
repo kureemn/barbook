@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
+import { flattenGroups, groupByExercise } from "@/lib/set-groups";
 import { selectClass } from "@/lib/utils";
 import {
   CATEGORIES,
@@ -38,33 +39,51 @@ const NEW_EXERCISE = "__new__";
 type SetRow = {
   key: number;
   id?: string;
-  exercise_id: string;
   weight: string;
   reps: string;
   rpe: string;
   is_warmup: boolean;
 };
 
+type ExerciseGroup = {
+  key: number;
+  exercise_id: string;
+  sets: SetRow[];
+};
+
+function blankSet(key: number): SetRow {
+  return { key, weight: "", reps: "", rpe: "", is_warmup: false };
+}
+
+/** Starts from the saved sets, or one empty exercise for a new workout. */
+function startingGroups(workout?: Workout): ExerciseGroup[] {
+  if (!workout) return [{ key: 0, exercise_id: "", sets: [blankSet(0)] }];
+  let setKey = 0;
+  return groupByExercise(workout.workout_sets).map((group, index) => ({
+    key: index,
+    exercise_id: group.exercise_id,
+    sets: group.sets.map((set) => ({
+      key: setKey++,
+      id: set.id,
+      weight: String(set.weight),
+      reps: String(set.reps),
+      rpe: set.rpe === null ? "" : String(set.rpe),
+      is_warmup: set.is_warmup,
+    })),
+  }));
+}
+
 export function WorkoutForm({ workout }: { workout?: Workout }) {
   const router = useRouter();
-  const nextKey = useRef(workout?.workout_sets.length ?? 0);
+  // Past every starting key, since each group has at least one set.
+  const nextKey = useRef(Math.max(workout?.workout_sets.length ?? 0, 1));
   const [exercises, setExercises] = useState<Exercise[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [title, setTitle] = useState(workout?.title ?? "");
   const [performedOn, setPerformedOn] = useState(workout?.performed_on ?? todayLocal());
   const [bodyweight, setBodyweight] = useState(workout?.bodyweight?.toString() ?? "");
   const [notes, setNotes] = useState(workout?.notes ?? "");
-  const [rows, setRows] = useState<SetRow[]>(() =>
-    (workout?.workout_sets ?? []).map((set, index) => ({
-      key: index,
-      id: set.id,
-      exercise_id: set.exercise_id,
-      weight: String(set.weight),
-      reps: String(set.reps),
-      rpe: set.rpe === null ? "" : String(set.rpe),
-      is_warmup: set.is_warmup,
-    }))
-  );
+  const [groups, setGroups] = useState(() => startingGroups(workout));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   // Messages wait for the first save attempt, then update as fields change.
@@ -80,7 +99,7 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
     performed_on: performedOn,
     bodyweight,
     notes,
-    sets: rows.map(({ id, exercise_id, weight, reps, rpe, is_warmup }) => ({
+    sets: flattenGroups(groups).map(({ id, exercise_id, weight, reps, rpe, is_warmup }) => ({
       id,
       exercise_id,
       weight,
@@ -97,46 +116,59 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
 
   useEffect(() => {
     loadExercises()
-      .then((loaded) => {
-        setExercises(loaded);
-        setRows((current) =>
-          current.length > 0
-            ? current
-            : [
-                {
-                  key: nextKey.current++,
-                  exercise_id: loaded[0]?.id ?? "",
-                  weight: "",
-                  reps: "",
-                  rpe: "",
-                  is_warmup: false,
-                },
-              ]
-        );
-      })
+      .then(setExercises)
       .catch(() => setLoadError("Couldn't load your exercises. Please try again."));
   }, []);
 
-  function changeRow(key: number, changes: Partial<SetRow>) {
-    setRows((current) => current.map((row) => (row.key === key ? { ...row, ...changes } : row)));
+  function changeGroup(key: number, changes: Partial<ExerciseGroup>) {
+    setGroups((current) =>
+      current.map((group) => (group.key === key ? { ...group, ...changes } : group))
+    );
+  }
+
+  function changeSet(groupKey: number, setKey: number, changes: Partial<SetRow>) {
+    setGroups((current) =>
+      current.map((group) =>
+        group.key === groupKey
+          ? {
+              ...group,
+              sets: group.sets.map((set) => (set.key === setKey ? { ...set, ...changes } : set)),
+            }
+          : group
+      )
+    );
   }
 
   // A new set starts from the last one, since most sets repeat the same numbers.
-  function addSet() {
-    setRows((current) => {
-      const last = current[current.length - 1];
-      return [
-        ...current,
-        {
-          key: nextKey.current++,
-          exercise_id: last?.exercise_id ?? exercises?.[0]?.id ?? "",
-          weight: last?.weight ?? "",
-          reps: last?.reps ?? "",
-          rpe: last?.rpe ?? "",
-          is_warmup: last?.is_warmup ?? false,
-        },
-      ];
-    });
+  function addSet(groupKey: number) {
+    const key = nextKey.current++;
+    setGroups((current) =>
+      current.map((group) => {
+        if (group.key !== groupKey) return group;
+        const last = group.sets[group.sets.length - 1];
+        return { ...group, sets: [...group.sets, { ...last, id: undefined, key }] };
+      })
+    );
+  }
+
+  function removeSet(groupKey: number, setKey: number) {
+    setGroups((current) =>
+      current.map((group) =>
+        group.key === groupKey
+          ? { ...group, sets: group.sets.filter((set) => set.key !== setKey) }
+          : group
+      )
+    );
+  }
+
+  // The exercise starts empty, so a set can't get logged under a lift by accident.
+  function addExercise() {
+    const groupKey = nextKey.current++;
+    const setKey = nextKey.current++;
+    setGroups((current) => [
+      ...current,
+      { key: groupKey, exercise_id: "", sets: [blankSet(setKey)] },
+    ]);
   }
 
   async function handleAddExercise() {
@@ -150,7 +182,7 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
     try {
       const created = await createExercise(result.data.name, newCategory);
       setExercises((current) => [...(current ?? []), created]);
-      if (newExerciseFor !== null) changeRow(newExerciseFor, { exercise_id: created.id });
+      if (newExerciseFor !== null) changeGroup(newExerciseFor, { exercise_id: created.id });
       setNewExerciseFor(null);
       setNewName("");
       setNewCategory("accessory");
@@ -240,32 +272,40 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
           </div>
         </div>
 
-        <section aria-labelledby="sets-heading" className="flex flex-col gap-3">
-          <h2 id="sets-heading" className="text-lg font-semibold">
-            Sets
+        <section aria-labelledby="exercises-heading" className="flex flex-col gap-3">
+          <h2 id="exercises-heading" className="text-lg font-semibold">
+            Exercises
           </h2>
-          {rows.map((row, index) => (
-            <fieldset key={row.key} className="rounded-lg border bg-card p-4">
-              <legend className="px-1 text-sm font-medium">Set {index + 1}</legend>
-              <div className="grid grid-cols-3 items-start gap-3">
-                <div className="col-span-3 grid gap-2">
-                  <Label htmlFor={`exercise-${row.key}`}>Exercise</Label>
+          {groups.map((group, groupIndex) => {
+            // Errors are keyed by a set's place in the whole workout.
+            const firstSet = groups
+              .slice(0, groupIndex)
+              .reduce((total, earlier) => total + earlier.sets.length, 0);
+            const exerciseError = errors[`sets.${firstSet}.exercise_id`];
+            return (
+              <fieldset key={group.key} className="rounded-lg border bg-card p-4">
+                <legend className="px-1 text-sm font-medium">Exercise {groupIndex + 1}</legend>
+                <div className="grid gap-2">
+                  <Label htmlFor={`exercise-${group.key}`}>Exercise</Label>
                   <select
-                    id={`exercise-${row.key}`}
+                    id={`exercise-${group.key}`}
                     className={selectClass}
                     required
-                    {...errorProps(`exercise-error-${row.key}`, errors[`sets.${index}.exercise_id`])}
-                    value={row.exercise_id}
+                    {...errorProps(`exercise-error-${group.key}`, exerciseError)}
+                    value={group.exercise_id}
                     onChange={(e) => {
                       if (e.target.value === NEW_EXERCISE) {
                         setNewExerciseError(null);
                         setNewExerciseAttempted(false);
-                        setNewExerciseFor(row.key);
+                        setNewExerciseFor(group.key);
                       } else {
-                        changeRow(row.key, { exercise_id: e.target.value });
+                        changeGroup(group.key, { exercise_id: e.target.value });
                       }
                     }}
                   >
+                    <option value="" disabled>
+                      Choose an exercise
+                    </option>
                     {exercises.map((exercise) => (
                       <option key={exercise.id} value={exercise.id}>
                         {exercise.name}
@@ -273,84 +313,137 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
                     ))}
                     <option value={NEW_EXERCISE}>+ Add new exercise</option>
                   </select>
-                  <FieldError
-                    id={`exercise-error-${row.key}`}
-                    message={errors[`sets.${index}.exercise_id`]}
-                  />
+                  <FieldError id={`exercise-error-${group.key}`} message={exerciseError} />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor={`weight-${row.key}`}>Weight (lb)</Label>
-                  <Input
-                    id={`weight-${row.key}`}
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="any"
-                    required
-                    {...errorProps(`weight-error-${row.key}`, errors[`sets.${index}.weight`])}
-                    value={row.weight}
-                    onChange={(e) => changeRow(row.key, { weight: e.target.value })}
-                  />
-                  <FieldError id={`weight-error-${row.key}`} message={errors[`sets.${index}.weight`]} />
+
+                <ol className="mt-4 flex flex-col gap-4">
+                  {group.sets.map((set, setIndex) => {
+                    const path = `sets.${firstSet + setIndex}`;
+                    return (
+                      <li key={set.key} className="border-t pt-3">
+                        <div role="group" aria-label={`Set ${setIndex + 1}`}>
+                          <p aria-hidden="true" className="text-sm font-medium">
+                            Set {setIndex + 1}
+                          </p>
+                          <div className="mt-2 grid grid-cols-3 items-start gap-3">
+                            <div className="grid gap-2">
+                              <Label htmlFor={`weight-${set.key}`}>Weight (lb)</Label>
+                              <Input
+                                id={`weight-${set.key}`}
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step="any"
+                                required
+                                {...errorProps(`weight-error-${set.key}`, errors[`${path}.weight`])}
+                                value={set.weight}
+                                onChange={(e) =>
+                                  changeSet(group.key, set.key, { weight: e.target.value })
+                                }
+                              />
+                              <FieldError
+                                id={`weight-error-${set.key}`}
+                                message={errors[`${path}.weight`]}
+                              />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor={`reps-${set.key}`}>Reps</Label>
+                              <Input
+                                id={`reps-${set.key}`}
+                                type="number"
+                                inputMode="numeric"
+                                min="1"
+                                step="1"
+                                required
+                                {...errorProps(`reps-error-${set.key}`, errors[`${path}.reps`])}
+                                value={set.reps}
+                                onChange={(e) =>
+                                  changeSet(group.key, set.key, { reps: e.target.value })
+                                }
+                              />
+                              <FieldError
+                                id={`reps-error-${set.key}`}
+                                message={errors[`${path}.reps`]}
+                              />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor={`rpe-${set.key}`}>RPE</Label>
+                              <Input
+                                id={`rpe-${set.key}`}
+                                type="number"
+                                inputMode="decimal"
+                                min="6"
+                                max="10"
+                                step="0.5"
+                                {...errorProps(`rpe-error-${set.key}`, errors[`${path}.rpe`])}
+                                value={set.rpe}
+                                onChange={(e) =>
+                                  changeSet(group.key, set.key, { rpe: e.target.value })
+                                }
+                              />
+                              <FieldError
+                                id={`rpe-error-${set.key}`}
+                                message={errors[`${path}.rpe`]}
+                              />
+                            </div>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between gap-3">
+                            <label className="flex min-h-11 items-center gap-2 text-sm">
+                              <input
+                                type="checkbox"
+                                className="size-5 accent-primary"
+                                checked={set.is_warmup}
+                                onChange={(e) =>
+                                  changeSet(group.key, set.key, { is_warmup: e.target.checked })
+                                }
+                              />
+                              Warm-up
+                            </label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              disabled={group.sets.length === 1}
+                              onClick={() => removeSet(group.key, set.key)}
+                            >
+                              <Trash2 className="size-4" aria-hidden="true" />
+                              Remove set {setIndex + 1}
+                            </Button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-label={`Add set to exercise ${groupIndex + 1}`}
+                    onClick={() => addSet(group.key)}
+                  >
+                    <Plus className="size-4" aria-hidden="true" />
+                    Add set
+                  </Button>
+                  {groups.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() =>
+                        setGroups((current) => current.filter((item) => item.key !== group.key))
+                      }
+                    >
+                      <Trash2 className="size-4" aria-hidden="true" />
+                      Remove exercise {groupIndex + 1}
+                    </Button>
+                  )}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor={`reps-${row.key}`}>Reps</Label>
-                  <Input
-                    id={`reps-${row.key}`}
-                    type="number"
-                    inputMode="numeric"
-                    min="1"
-                    step="1"
-                    required
-                    {...errorProps(`reps-error-${row.key}`, errors[`sets.${index}.reps`])}
-                    value={row.reps}
-                    onChange={(e) => changeRow(row.key, { reps: e.target.value })}
-                  />
-                  <FieldError id={`reps-error-${row.key}`} message={errors[`sets.${index}.reps`]} />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor={`rpe-${row.key}`}>RPE</Label>
-                  <Input
-                    id={`rpe-${row.key}`}
-                    type="number"
-                    inputMode="decimal"
-                    min="6"
-                    max="10"
-                    step="0.5"
-                    {...errorProps(`rpe-error-${row.key}`, errors[`sets.${index}.rpe`])}
-                    value={row.rpe}
-                    onChange={(e) => changeRow(row.key, { rpe: e.target.value })}
-                  />
-                  <FieldError id={`rpe-error-${row.key}`} message={errors[`sets.${index}.rpe`]} />
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <label className="flex min-h-11 items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="size-5 accent-primary"
-                    checked={row.is_warmup}
-                    onChange={(e) => changeRow(row.key, { is_warmup: e.target.checked })}
-                  />
-                  Warm-up
-                </label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={rows.length === 1}
-                  onClick={() =>
-                    setRows((current) => current.filter((item) => item.key !== row.key))
-                  }
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                  Remove set {index + 1}
-                </Button>
-              </div>
-            </fieldset>
-          ))}
-          <Button type="button" variant="outline" onClick={addSet}>
+              </fieldset>
+            );
+          })}
+          <Button type="button" variant="outline" onClick={addExercise}>
             <Plus className="size-4" aria-hidden="true" />
-            Add set
+            Add exercise
           </Button>
         </section>
 

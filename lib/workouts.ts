@@ -2,6 +2,7 @@
 
 import type { DashboardWorkout } from "@/lib/dashboard";
 import { client } from "@/lib/neon/client";
+import { missingStarters } from "@/lib/starter-exercises";
 
 export const CATEGORIES = ["squat", "bench", "deadlift", "accessory"] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -51,12 +52,6 @@ export type SetInput = {
   is_warmup: boolean;
 };
 
-const STARTER_EXERCISES: { name: string; category: Category }[] = [
-  { name: "Squat", category: "squat" },
-  { name: "Bench", category: "bench" },
-  { name: "Deadlift", category: "deadlift" },
-];
-
 /** Today in the lifter's own timezone, as YYYY-MM-DD. */
 export function todayLocal() {
   const now = new Date();
@@ -85,18 +80,19 @@ function sortExercises(exercises: Exercise[]) {
   );
 }
 
-/** Gives a new account the three competition lifts, so logging works right away. */
+/** Tops up the user's list with any starter exercises they don't have yet. */
 export async function loadExercises(): Promise<Exercise[]> {
   const query = () =>
     client.from("exercises").select("id, name, category");
 
   const { data, error } = await query();
   if (error) throw error;
-  if (data.length > 0) return sortExercises(data as Exercise[]);
+  const missing = missingStarters(data as Exercise[]);
+  if (missing.length === 0) return sortExercises(data as Exercise[]);
 
   const { error: seedError } = await client
     .from("exercises")
-    .upsert(STARTER_EXERCISES, { onConflict: "user_id,name", ignoreDuplicates: true });
+    .upsert(missing, { onConflict: "user_id,name", ignoreDuplicates: true });
   if (seedError) throw seedError;
 
   const { data: seeded, error: reloadError } = await query();

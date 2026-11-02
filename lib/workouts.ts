@@ -1,5 +1,6 @@
 "use client";
 
+import type { DashboardWorkout } from "@/lib/dashboard";
 import { client } from "@/lib/neon/client";
 
 export const CATEGORIES = ["squat", "bench", "deadlift", "accessory"] as const;
@@ -124,6 +125,14 @@ export async function loadWorkouts({ starredOnly = false } = {}): Promise<Workou
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data as unknown as Workout[];
+}
+
+export async function loadDashboardWorkouts(): Promise<DashboardWorkout[]> {
+  const { data, error } = await client
+    .from("workouts")
+    .select("performed_on, workout_sets(weight, reps, rpe, is_warmup, exercises(category))");
+  if (error) throw error;
+  return data as unknown as DashboardWorkout[];
 }
 
 /** Returns null when the workout doesn't exist or belongs to someone else. */

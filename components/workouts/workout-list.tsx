@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { StarButton } from "@/components/workouts/star-button";
+import { WorkoutNav } from "@/components/workouts/workout-nav";
 import { useRequireAuth } from "@/lib/neon/use-auth-guard";
 import {
   filtersFromParams,
@@ -21,11 +22,6 @@ import {
 import { selectClass } from "@/lib/utils";
 import { workoutVolume } from "@/lib/volume";
 import { formatDate, loadExercises, loadWorkouts, type Exercise, type Workout } from "@/lib/workouts";
-
-const VIEWS = [
-  { href: "/workouts", label: "All" },
-  { href: "/workouts/starred", label: "Starred" },
-];
 
 // Reading the link's filters needs a Suspense boundary for Next.js to build the page.
 export function WorkoutList({ starredOnly = false }: { starredOnly?: boolean }) {
@@ -85,18 +81,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
         </Button>
       </div>
 
-      <nav aria-label="Workout views" className="mt-4 flex gap-2">
-        {VIEWS.map((view) => {
-          const current = (view.href === "/workouts/starred") === starredOnly;
-          return (
-            <Button key={view.href} asChild variant={current ? "secondary" : "ghost"}>
-              <Link href={view.href} aria-current={current ? "page" : undefined}>
-                {view.label}
-              </Link>
-            </Button>
-          );
-        })}
-      </nav>
+      <WorkoutNav current={starredOnly ? "/workouts/starred" : "/workouts"} />
 
       {workouts.length === 0 ? (
         <p className="mt-6 text-muted-foreground">

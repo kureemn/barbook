@@ -3,7 +3,9 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { errorProps, FieldError, focusFirstError } from "@/components/field-error";
 import { client } from "@/lib/neon/client";
+import { validateSignIn, validateSignUp } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,15 +28,26 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [attempted, setAttempted] = useState(false);
+
+  const signUp = validateSignUp({ name, email, password });
+  const signIn = validateSignIn({ email, password });
+  const errors = attempted ? (isSignUp ? signUp.errors : signIn.errors) : {};
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setAttempted(true);
+    if (isSignUp ? !signUp.success : !signIn.success) {
+      focusFirstError();
+      return;
+    }
     setSubmitting(true);
     try {
-      const { error: authError } = isSignUp
-        ? await client.auth.signUp.email({ email, password, name })
-        : await client.auth.signIn.email({ email, password });
+      const { error: authError } =
+        isSignUp && signUp.data
+          ? await client.auth.signUp.email(signUp.data)
+          : await client.auth.signIn.email(signIn.data ?? { email, password });
 
       if (authError) {
         setError(authError.message || "Something went wrong. Please try again.");
@@ -54,7 +67,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
   return (
     <Card className="w-full max-w-sm">
-      <form onSubmit={handleSubmit}>
+      <form noValidate onSubmit={handleSubmit}>
         <CardHeader>
           <CardTitle>
             <h1>{isSignUp ? "Create your account" : "Welcome back"}</h1>
@@ -78,9 +91,11 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
                 id="name"
                 autoComplete="name"
                 required
+                {...errorProps("name-error", errors.name)}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+              <FieldError id="name-error" message={errors.name} />
             </div>
           )}
           <div className="grid gap-2">
@@ -90,9 +105,11 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
               type="email"
               autoComplete="email"
               required
+              {...errorProps("email-error", errors.email)}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
+            <FieldError id="email-error" message={errors.email} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
@@ -101,12 +118,13 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
               type="password"
               autoComplete={isSignUp ? "new-password" : "current-password"}
               required
-              minLength={8}
               aria-describedby={isSignUp ? "password-hint" : undefined}
+              {...errorProps("password-error", errors.password)}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            {isSignUp && (
+            <FieldError id="password-error" message={errors.password} />
+            {isSignUp && !errors.password && (
               <p id="password-hint" className="text-sm text-muted-foreground">
                 At least 8 characters.
               </p>

@@ -59,11 +59,22 @@ One row per set. Weights are in pounds.
 | `rpe` | number | Optional, 6 to 10 |
 | `is_warmup` | true/false | Defaults to false |
 
+### stars
+
+One table for everyone. Each row means "this user starred this workout".
+
+| Column | Type | Notes |
+|---|---|---|
+| `user_id` | uuid | Part of the primary key, links to users |
+| `workout_id` | uuid | Part of the primary key, links to workouts |
+| `created_at` | timestamp | |
+
 ## How they relate
 
 - A user has many exercises and many workouts (one-to-many).
 - A workout has many sets, and an exercise appears in many sets (one-to-many each). Together, `workout_sets` connects workouts and exercises many-to-many.
-- Deleting a workout deletes its sets. An exercise that has sets can't be deleted.
+- `stars` connects users and workouts many-to-many, as a junction table. A user can star a workout only once, and only their own.
+- Deleting a workout deletes its sets and stars. An exercise that has sets can't be deleted.
 - A set's workout and exercise must have the same owner as the set.
 
 ```mermaid
@@ -72,6 +83,8 @@ erDiagram
     users ||--o{ workouts : logs
     workouts ||--o{ workout_sets : contains
     exercises ||--o{ workout_sets : "performed in"
+    users ||--o{ stars : gives
+    workouts ||--o{ stars : receives
 ```
 
 ## Who can see what
@@ -79,6 +92,13 @@ erDiagram
 Row Level Security is on for every table in `public`. A signed-in user can only read, add, change, or delete rows where `user_id` is their own. Logged-out visitors get nothing. Run `npm run db:verify` to check this.
 
 Access is opt-in. New tables get no automatic access, so each one needs its own grant in `db/schema.sql`, next to its Row Level Security rules. `db:verify` fails if a table in `public` is missing Row Level Security, or if new tables start getting automatic access.
+
+## Changing the database
+
+1. Update `db/schema.sql`, then run `npm run db:migrate`.
+2. Click **Refresh schema cache** on the Neon Console's Data API page. Until then, the Data API rejects queries that use new tables.
+3. Run `npm run db:verify`.
+4. Merge the app code that uses the change.
 
 ## Did the agent build what I designed?
 
@@ -89,4 +109,4 @@ Mostly, with these differences from PLAN.md section 3:
 | `users` is a regular table | Lives in Neon Auth's `neon_auth` schema | Neon Auth creates and manages it |
 | IDs are text | `uuid` | Neon Auth's user id is a uuid, and the database can validate it |
 | `created_at` is a date | Date and time | Keeps the exact moment a row was created |
-| All tables in this feature | `stars` arrives with feature 5, `templates` and `template_exercises` with feature 8, along with `workouts.template_id` | One feature per PR |
+| All tables in this feature | `templates` and `template_exercises` arrive with feature 8, along with `workouts.template_id` | One feature per PR |

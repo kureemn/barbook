@@ -1,6 +1,9 @@
 -- Barbook tables, Row Level Security policies, and grants.
 -- Safe to re-run with `npm run db:migrate`: every statement is idempotent.
 --
+-- After adding a table or column, click "Refresh schema cache" on the Neon
+-- Console's Data API page, or the Data API rejects queries that use it.
+--
 -- Accounts live in neon_auth."user", managed by Neon Auth. Every table here
 -- stores the owner's id in user_id, which defaults to the signed-in user.
 -- auth.user_id() returns text and the account id is a uuid, hence the casts.
@@ -72,6 +75,19 @@ create table if not exists workout_sets (
 create index if not exists workout_sets_workout_idx on workout_sets (workout_id);
 create index if not exists workout_sets_owner_exercise_idx on workout_sets (user_id, exercise_id);
 
+-- Stars: one table for everyone, where each row means "this user starred this
+-- workout". The two-column primary key means a workout can't be starred twice,
+-- and the foreign key means only the workout's owner can star it.
+create table if not exists stars (
+  user_id     uuid not null default auth.user_id()::uuid references neon_auth."user" (id) on delete cascade,
+  workout_id  uuid not null,
+  created_at  timestamptz not null default now(),
+
+  primary key (user_id, workout_id),
+  constraint stars_workout_fk foreign key (workout_id, user_id)
+    references workouts (id, user_id) on delete cascade
+);
+
 -- Row Level Security: a signed-in user reaches only rows where user_id is theirs.
 -- USING picks which existing rows qualify. WITH CHECK tests the row after a
 -- write, so nobody can hand a row to another account.
@@ -108,5 +124,19 @@ begin
 end
 $$;
 
--- Tell the Data API to pick up the new tables.
-notify pgrst, 'reload schema';
+-- A star is only ever added or removed, so it has no update policy or grant.
+alter table stars enable row level security;
+
+drop policy if exists stars_select_own on stars;
+create policy stars_select_own on stars
+  for select to authenticated using (auth.user_id()::uuid = user_id);
+
+drop policy if exists stars_insert_own on stars;
+create policy stars_insert_own on stars
+  for insert to authenticated with check (auth.user_id()::uuid = user_id);
+
+drop policy if exists stars_delete_own on stars;
+create policy stars_delete_own on stars
+  for delete to authenticated using (auth.user_id()::uuid = user_id);
+
+grant select, insert, delete on stars to authenticated;

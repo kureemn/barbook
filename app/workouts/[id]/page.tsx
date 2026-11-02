@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
+import { StarButton } from "@/components/workouts/star-button";
 import { useRequireAuth } from "@/lib/neon/use-auth-guard";
 import {
   deleteWorkout,
@@ -83,7 +84,14 @@ export default function WorkoutDetailPage() {
         All workouts
       </Link>
 
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">{workout.title}</h1>
+      <div className="mt-2 flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">{workout.title}</h1>
+        <StarButton
+          workoutId={workout.id}
+          title={workout.title}
+          initialStarred={workout.stars !== null}
+        />
+      </div>
       <p className="mt-1 text-muted-foreground">
         {formatDate(workout.performed_on)}
         {workout.bodyweight !== null && ` · ${workout.bodyweight} lb bodyweight`}

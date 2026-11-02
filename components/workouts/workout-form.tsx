@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AddExerciseDialog } from "@/components/workouts/add-exercise-dialog";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
+import { RestTimer } from "@/components/workouts/rest-timer";
 import { flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
 import type { Suggestion } from "@/lib/suggestions";
 import type { Template } from "@/lib/templates";
@@ -471,6 +472,8 @@ export function WorkoutForm({
           </Button>
         </div>
       </form>
+
+      <RestTimer />
 
       <AddExerciseDialog
         open={newExerciseFor !== null}

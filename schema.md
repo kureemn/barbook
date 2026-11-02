@@ -1,0 +1,92 @@
+# Barbook database
+
+This describes what's in the database now. Tables arrive with the feature that needs them, and PLAN.md section 3 has the full design.
+
+## Tables
+
+### users (`neon_auth."user"`)
+
+Created and managed by Neon Auth, in its own schema. Every account is one row.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `name` | text | |
+| `email` | text | |
+| `createdAt`, `updatedAt` | timestamp | |
+
+It also has auth-only columns, such as `emailVerified`, `image`, and `role`.
+
+### exercises
+
+The lifts a user trains.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | Owner, links to users |
+| `name` | text | Required, unique per user |
+| `category` | text | squat, bench, deadlift, or accessory |
+| `created_at` | timestamp | |
+
+### workouts
+
+One training session on one date.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | Owner, links to users |
+| `title` | text | Required |
+| `performed_on` | date | Required |
+| `bodyweight` | number | Optional |
+| `notes` | text | Optional |
+| `created_at` | timestamp | |
+
+### workout_sets
+
+One row per set. Weights are in pounds.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | Owner, links to users |
+| `workout_id` | uuid | Links to workouts |
+| `exercise_id` | uuid | Links to exercises |
+| `set_number` | number | Above 0 |
+| `weight` | number | 0 or more |
+| `reps` | number | Above 0 |
+| `rpe` | number | Optional, 6 to 10 |
+| `is_warmup` | true/false | Defaults to false |
+
+## How they relate
+
+- A user has many exercises and many workouts (one-to-many).
+- A workout has many sets, and an exercise appears in many sets (one-to-many each). Together, `workout_sets` connects workouts and exercises many-to-many.
+- Deleting a workout deletes its sets. An exercise that has sets can't be deleted.
+- A set's workout and exercise must have the same owner as the set.
+
+```mermaid
+erDiagram
+    users ||--o{ exercises : defines
+    users ||--o{ workouts : logs
+    workouts ||--o{ workout_sets : contains
+    exercises ||--o{ workout_sets : "performed in"
+```
+
+## Who can see what
+
+Row Level Security is on for every table in `public`. A signed-in user can only read, add, change, or delete rows where `user_id` is their own. Logged-out visitors get nothing. Run `npm run db:verify` to check this.
+
+Access is opt-in. New tables get no automatic access, so each one needs its own grant in `db/schema.sql`, next to its Row Level Security rules. `db:verify` fails if a table in `public` is missing Row Level Security, or if new tables start getting automatic access.
+
+## Did the agent build what I designed?
+
+Mostly, with these differences from PLAN.md section 3:
+
+| Planned | Built | Why |
+|---|---|---|
+| `users` is a regular table | Lives in Neon Auth's `neon_auth` schema | Neon Auth creates and manages it |
+| IDs are text | `uuid` | Neon Auth's user id is a uuid, and the database can validate it |
+| `created_at` is a date | Date and time | Keeps the exact moment a row was created |
+| All tables in this feature | `stars` arrives with feature 5, `templates` and `template_exercises` with feature 8, along with `workouts.template_id` | One feature per PR |

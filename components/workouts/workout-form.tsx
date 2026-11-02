@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import { errorProps, FieldError, focusFirstError } from "@/components/field-error";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,13 +28,13 @@ import {
   updateWorkout,
   type Category,
   type Exercise,
-  type SetInput,
   type Workout,
 } from "@/lib/workouts";
+import { validateExercise, validateWorkout } from "@/lib/validation";
 
 const NEW_EXERCISE = "__new__";
 const selectClass =
-  "h-11 w-full rounded-md border border-input bg-input/30 px-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "h-11 w-full rounded-md border border-input bg-input/30 px-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/40";
 
 type SetRow = {
   key: number;
@@ -44,10 +45,6 @@ type SetRow = {
   rpe: string;
   is_warmup: boolean;
 };
-
-function optionalNumber(value: string) {
-  return value.trim() === "" ? null : Number(value);
-}
 
 export function WorkoutForm({ workout }: { workout?: Workout }) {
   const router = useRouter();
@@ -71,10 +68,33 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // Messages wait for the first save attempt, then update as fields change.
+  const [attempted, setAttempted] = useState(false);
   const [newExerciseFor, setNewExerciseFor] = useState<number | null>(null);
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState<Category>("accessory");
   const [newExerciseError, setNewExerciseError] = useState<string | null>(null);
+  const [newExerciseAttempted, setNewExerciseAttempted] = useState(false);
+
+  const validation = validateWorkout({
+    title,
+    performed_on: performedOn,
+    bodyweight,
+    notes,
+    sets: rows.map(({ id, exercise_id, weight, reps, rpe, is_warmup }) => ({
+      id,
+      exercise_id,
+      weight,
+      reps,
+      rpe,
+      is_warmup,
+    })),
+  });
+  const errors = attempted ? validation.errors : {};
+  const hasErrors = Object.keys(errors).length > 0;
+  const newExerciseNameError = newExerciseAttempted
+    ? validateExercise({ name: newName }).errors.name
+    : undefined;
 
   useEffect(() => {
     loadExercises()
@@ -122,13 +142,20 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
 
   async function handleAddExercise() {
     setNewExerciseError(null);
+    setNewExerciseAttempted(true);
+    const result = validateExercise({ name: newName });
+    if (!result.success) {
+      focusFirstError();
+      return;
+    }
     try {
-      const created = await createExercise(newName.trim(), newCategory);
+      const created = await createExercise(result.data.name, newCategory);
       setExercises((current) => [...(current ?? []), created]);
       if (newExerciseFor !== null) changeRow(newExerciseFor, { exercise_id: created.id });
       setNewExerciseFor(null);
       setNewName("");
       setNewCategory("accessory");
+      setNewExerciseAttempted(false);
     } catch {
       setNewExerciseError("Couldn't add that exercise. It may already be on your list.");
     }
@@ -137,21 +164,13 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setAttempted(true);
+    if (!validation.success) {
+      focusFirstError();
+      return;
+    }
     setSaving(true);
-    const details = {
-      title,
-      performed_on: performedOn,
-      bodyweight: optionalNumber(bodyweight),
-      notes: notes.trim() === "" ? null : notes,
-    };
-    const sets: SetInput[] = rows.map((row) => ({
-      id: row.id,
-      exercise_id: row.exercise_id,
-      weight: Number(row.weight),
-      reps: Number(row.reps),
-      rpe: optionalNumber(row.rpe),
-      is_warmup: row.is_warmup,
-    }));
+    const { sets, ...details } = validation.data;
     try {
       if (workout) {
         await updateWorkout(workout.id, details, sets);
@@ -175,17 +194,24 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
         {workout ? "Edit workout" : "Add workout"}
       </h1>
 
-      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-6">
-        {error && (
+      <form noValidate onSubmit={handleSubmit} className="mt-6 flex flex-col gap-6">
+        {(error || hasErrors) && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{error ?? "Fix the marked fields to save this workout."}</AlertDescription>
           </Alert>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid items-start gap-4 sm:grid-cols-2">
           <div className="grid gap-2 sm:col-span-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" required value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input
+              id="title"
+              required
+              {...errorProps("title-error", errors.title)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <FieldError id="title-error" message={errors.title} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="performed-on">Date</Label>
@@ -193,9 +219,11 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
               id="performed-on"
               type="date"
               required
+              {...errorProps("performed-on-error", errors.performed_on)}
               value={performedOn}
               onChange={(e) => setPerformedOn(e.target.value)}
             />
+            <FieldError id="performed-on-error" message={errors.performed_on} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="bodyweight">Bodyweight (lb, optional)</Label>
@@ -205,9 +233,11 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
               inputMode="decimal"
               min="1"
               step="0.1"
+              {...errorProps("bodyweight-error", errors.bodyweight)}
               value={bodyweight}
               onChange={(e) => setBodyweight(e.target.value)}
             />
+            <FieldError id="bodyweight-error" message={errors.bodyweight} />
           </div>
         </div>
 
@@ -218,17 +248,19 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
           {rows.map((row, index) => (
             <fieldset key={row.key} className="rounded-lg border bg-card p-4">
               <legend className="px-1 text-sm font-medium">Set {index + 1}</legend>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 items-start gap-3">
                 <div className="col-span-3 grid gap-2">
                   <Label htmlFor={`exercise-${row.key}`}>Exercise</Label>
                   <select
                     id={`exercise-${row.key}`}
                     className={selectClass}
                     required
+                    {...errorProps(`exercise-error-${row.key}`, errors[`sets.${index}.exercise_id`])}
                     value={row.exercise_id}
                     onChange={(e) => {
                       if (e.target.value === NEW_EXERCISE) {
                         setNewExerciseError(null);
+                        setNewExerciseAttempted(false);
                         setNewExerciseFor(row.key);
                       } else {
                         changeRow(row.key, { exercise_id: e.target.value });
@@ -242,6 +274,10 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
                     ))}
                     <option value={NEW_EXERCISE}>+ Add new exercise</option>
                   </select>
+                  <FieldError
+                    id={`exercise-error-${row.key}`}
+                    message={errors[`sets.${index}.exercise_id`]}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor={`weight-${row.key}`}>Weight (lb)</Label>
@@ -252,9 +288,11 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
                     min="0"
                     step="any"
                     required
+                    {...errorProps(`weight-error-${row.key}`, errors[`sets.${index}.weight`])}
                     value={row.weight}
                     onChange={(e) => changeRow(row.key, { weight: e.target.value })}
                   />
+                  <FieldError id={`weight-error-${row.key}`} message={errors[`sets.${index}.weight`]} />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor={`reps-${row.key}`}>Reps</Label>
@@ -265,9 +303,11 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
                     min="1"
                     step="1"
                     required
+                    {...errorProps(`reps-error-${row.key}`, errors[`sets.${index}.reps`])}
                     value={row.reps}
                     onChange={(e) => changeRow(row.key, { reps: e.target.value })}
                   />
+                  <FieldError id={`reps-error-${row.key}`} message={errors[`sets.${index}.reps`]} />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor={`rpe-${row.key}`}>RPE</Label>
@@ -278,9 +318,11 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
                     min="6"
                     max="10"
                     step="0.5"
+                    {...errorProps(`rpe-error-${row.key}`, errors[`sets.${index}.rpe`])}
                     value={row.rpe}
                     onChange={(e) => changeRow(row.key, { rpe: e.target.value })}
                   />
+                  <FieldError id={`rpe-error-${row.key}`} message={errors[`sets.${index}.rpe`]} />
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between gap-3">
@@ -349,9 +391,12 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
             <Label htmlFor="new-exercise-name">Name</Label>
             <Input
               id="new-exercise-name"
+              required
+              {...errorProps("new-exercise-name-error", newExerciseNameError)}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
+            <FieldError id="new-exercise-name-error" message={newExerciseNameError} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="new-exercise-category">Category</Label>
@@ -369,7 +414,7 @@ export function WorkoutForm({ workout }: { workout?: Workout }) {
             </select>
           </div>
           <DialogFooter>
-            <Button type="button" onClick={handleAddExercise} disabled={newName.trim() === ""}>
+            <Button type="button" onClick={handleAddExercise}>
               Add exercise
             </Button>
           </DialogFooter>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatTime, secondsLeft } from "@/lib/rest-timer";
+import { DEFAULT_REST, formatTime, savedRest, secondsLeft } from "@/lib/rest-timer";
 
 describe("secondsLeft", () => {
   it("counts down from the end time", () => {
@@ -22,5 +22,17 @@ describe("formatTime", () => {
     expect(formatTime(300)).toBe("5:00");
     expect(formatTime(65)).toBe("1:05");
     expect(formatTime(0)).toBe("0:00");
+  });
+});
+
+describe("savedRest", () => {
+  it("uses a saved preset", () => {
+    expect(savedRest("120")).toBe(120);
+  });
+
+  it("falls back to the default for nothing saved or an unknown value", () => {
+    expect(savedRest(null)).toBe(DEFAULT_REST);
+    expect(savedRest("7")).toBe(DEFAULT_REST);
+    expect(savedRest("abc")).toBe(DEFAULT_REST);
   });
 });

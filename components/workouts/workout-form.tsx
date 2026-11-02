@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AddExerciseDialog } from "@/components/workouts/add-exercise-dialog";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
-import { RestTimer } from "@/components/workouts/rest-timer";
+import { RestTimerBar, SetRestButton, useRestTimer } from "@/components/workouts/rest-timer";
 import { flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
 import type { Suggestion } from "@/lib/suggestions";
 import type { Template } from "@/lib/templates";
@@ -95,6 +95,7 @@ export function WorkoutForm({
   suggestions?: Record<string, Suggestion>;
 }) {
   const router = useRouter();
+  const timer = useRestTimer();
   const [groups, setGroups] = useState(() => startingGroups(workout, template, suggestions));
   // Past every starting key, since each group has at least one set.
   const nextKey = useRef(groups.reduce((total, group) => total + group.sets.length, 0));
@@ -419,6 +420,13 @@ export function WorkoutForm({
                               Remove set {setIndex + 1}
                             </Button>
                           </div>
+                          <div className="mt-2">
+                            <SetRestButton
+                              timer={timer}
+                              setKey={set.key}
+                              setNumber={setIndex + 1}
+                            />
+                          </div>
                         </div>
                       </li>
                     );
@@ -473,7 +481,7 @@ export function WorkoutForm({
         </div>
       </form>
 
-      <RestTimer />
+      <RestTimerBar timer={timer} />
 
       <AddExerciseDialog
         open={newExerciseFor !== null}

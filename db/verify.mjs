@@ -94,6 +94,11 @@ try {
   );
   report("User A sees their own workout", (await countRows("select * from workouts")) === 1);
 
+  await client.query("insert into stars (workout_id) values ($1)", [workout.id]);
+  report("User A can star their workout", (await countRows("select * from stars")) === 1);
+  await expectBlocked("a workout can't be starred twice",
+    "insert into stars (workout_id) values ($1)", [workout.id], "23505");
+
   await expectBlocked("blank title is rejected",
     "insert into workouts (title, performed_on) values ('  ', '2026-11-01')", [], "23514");
   await expectBlocked("RPE above 10 is rejected",
@@ -108,7 +113,7 @@ try {
     "delete from exercises where id = $1", [exercise.id], "23001");
 
   await actAs("authenticated", USER_B);
-  for (const table of ["workouts", "exercises", "workout_sets"]) {
+  for (const table of ["workouts", "exercises", "workout_sets", "stars"]) {
     report(`User B sees none of User A's ${table}`, (await countRows(`select * from ${table}`)) === 0);
   }
   report("User B can't open User A's workout by id",
@@ -125,6 +130,13 @@ try {
   await expectBlocked("User B can't attach a set to User A's workout",
     "insert into workout_sets (workout_id, exercise_id, set_number, weight, reps) values ($1, $2, 1, 100, 1)",
     [workout.id, ownExercise.id], "23503");
+
+  await expectBlocked("User B can't star User A's workout",
+    "insert into stars (workout_id) values ($1)", [workout.id], "23503");
+  await expectBlocked("User B can't create a star owned by User A",
+    "insert into stars (user_id, workout_id) values ($1, $2)", [USER_A, workout.id], "42501");
+  report("User B's delete of User A's star changes nothing",
+    (await countRows("delete from stars where workout_id = $1", [workout.id])) === 0);
 
   await actAs("authenticated", null);
   report("a request with no user sees nothing", (await countRows("select * from workouts")) === 0);
@@ -147,6 +159,8 @@ try {
   await client.query("reset role");
   report("deleting a workout deletes its sets",
     (await countRows("select * from workout_sets where workout_id = $1", [workout.id])) === 0);
+  report("deleting a workout deletes its stars",
+    (await countRows("select * from stars where workout_id = $1", [workout.id])) === 0);
 } finally {
   await client.query("rollback").catch(() => {});
   await client.end();

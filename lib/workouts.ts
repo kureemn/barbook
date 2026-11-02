@@ -29,6 +29,9 @@ export type Workout = {
   bodyweight: number | null;
   notes: string | null;
   workout_sets: WorkoutSet[];
+  // One object or null, not a list: the stars key (user_id, workout_id) matches
+  // its link to workouts, so the Data API treats this as one-to-one.
+  stars: { workout_id: string } | null;
 };
 
 export type WorkoutInput = {
@@ -117,10 +120,13 @@ export async function createExercise(name: string, category: Category) {
   return data as Exercise;
 }
 
-export async function loadWorkouts(): Promise<Workout[]> {
+export async function loadWorkouts({ starredOnly = false } = {}): Promise<Workout[]> {
+  // An inner join keeps only workouts with a star. Row Level Security means the
+  // only stars visible here are the signed-in user's own.
+  const stars = starredOnly ? "stars!inner(workout_id)" : "stars(workout_id)";
   const { data, error } = await client
     .from("workouts")
-    .select("id, title, performed_on, bodyweight, notes, workout_sets(id, weight, reps, is_warmup)")
+    .select(`id, title, performed_on, bodyweight, notes, workout_sets(id, weight, reps, is_warmup), ${stars}`)
     .order("performed_on", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -132,7 +138,7 @@ export async function loadWorkout(id: string): Promise<Workout | null> {
   const { data, error } = await client
     .from("workouts")
     .select(
-      "id, title, performed_on, bodyweight, notes, workout_sets(id, exercise_id, set_number, weight, reps, rpe, is_warmup, exercises(name))"
+      "id, title, performed_on, bodyweight, notes, workout_sets(id, exercise_id, set_number, weight, reps, rpe, is_warmup, exercises(name)), stars(workout_id)"
     )
     .eq("id", id)
     .order("set_number", { referencedTable: "workout_sets" })
@@ -204,5 +210,12 @@ export async function updateWorkout(id: string, workout: WorkoutInput, sets: Set
 
 export async function deleteWorkout(id: string) {
   const { error } = await client.from("workouts").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function setStarred(workoutId: string, starred: boolean) {
+  const { error } = starred
+    ? await client.from("stars").insert({ workout_id: workoutId })
+    : await client.from("stars").delete().eq("workout_id", workoutId);
   if (error) throw error;
 }

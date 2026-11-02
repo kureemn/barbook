@@ -18,11 +18,11 @@ import {
 import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { StarButton } from "@/components/workouts/star-button";
 import { useRequireAuth } from "@/lib/neon/use-auth-guard";
+import { workoutVolume } from "@/lib/volume";
 import {
   deleteWorkout,
   formatDate,
   loadWorkout,
-  workoutVolume,
   type Workout,
   type WorkoutSet,
 } from "@/lib/workouts";

@@ -75,13 +75,6 @@ export function formatDate(date: string) {
   });
 }
 
-/** Total weight moved in working sets. Warm-ups don't count. */
-export function workoutVolume(sets: Pick<WorkoutSet, "weight" | "reps" | "is_warmup">[]) {
-  return sets
-    .filter((set) => !set.is_warmup)
-    .reduce((total, set) => total + Number(set.weight) * set.reps, 0);
-}
-
 /** Competition order first: squat, bench, deadlift, then accessories by name. */
 function sortExercises(exercises: Exercise[]) {
   return [...exercises].sort(
@@ -126,7 +119,7 @@ export async function loadWorkouts({ starredOnly = false } = {}): Promise<Workou
   const stars = starredOnly ? "stars!inner(workout_id)" : "stars(workout_id)";
   const { data, error } = await client
     .from("workouts")
-    .select(`id, title, performed_on, bodyweight, notes, workout_sets(id, weight, reps, is_warmup), ${stars}`)
+    .select(`id, title, performed_on, bodyweight, notes, workout_sets(id, exercise_id, weight, reps, is_warmup), ${stars}`)
     .order("performed_on", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw error;

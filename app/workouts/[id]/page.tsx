@@ -18,25 +18,14 @@ import {
 import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { StarButton } from "@/components/workouts/star-button";
 import { useRequireAuth } from "@/lib/neon/use-auth-guard";
+import { groupByExercise } from "@/lib/set-groups";
 import { workoutVolume } from "@/lib/volume";
 import {
   deleteWorkout,
   formatDate,
   loadWorkout,
   type Workout,
-  type WorkoutSet,
 } from "@/lib/workouts";
-
-/** Groups consecutive sets of the same exercise, keeping the order they were done. */
-function groupByExercise(sets: WorkoutSet[]) {
-  const groups: { key: string; name: string; sets: WorkoutSet[] }[] = [];
-  for (const set of sets) {
-    const last = groups[groups.length - 1];
-    if (last && last.sets[0].exercise_id === set.exercise_id) last.sets.push(set);
-    else groups.push({ key: set.id, name: set.exercises?.name ?? "Exercise", sets: [set] });
-  }
-  return groups;
-}
 
 export default function WorkoutDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -115,8 +104,8 @@ export default function WorkoutDetailPage() {
 
       <div className="mt-6 flex flex-col gap-4">
         {groupByExercise(workout.workout_sets).map((group) => (
-          <section key={group.key} className="rounded-lg border bg-card p-4">
-            <h2 className="font-semibold">{group.name}</h2>
+          <section key={group.sets[0].id} className="rounded-lg border bg-card p-4">
+            <h2 className="font-semibold">{group.sets[0].exercises?.name ?? "Exercise"}</h2>
             <ul className="mt-2 flex flex-col gap-1">
               {group.sets.map((set) => (
                 <li key={set.id} className="flex flex-wrap items-baseline gap-x-2 text-lg tabular-nums">

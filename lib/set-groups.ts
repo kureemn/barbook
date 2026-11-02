@@ -16,19 +16,21 @@ export function flattenGroups<Set>(groups: { exercise_id: string; sets: Set[] }[
   );
 }
 
-/** One group per template exercise, with its target sets ready to fill in. Weight stays blank. */
+/** One group per template exercise, with its target sets ready to fill in. */
 export function setsFromTemplate(
   exercises: {
+    id?: string;
     exercise_id: string;
     target_sets: number;
     target_reps: number;
     target_rpe: number | null;
-  }[]
+  }[],
+  weightFor: (exercise: { id?: string }) => number | undefined = () => undefined
 ) {
   return exercises.map((exercise) => ({
     exercise_id: exercise.exercise_id,
     sets: Array.from({ length: exercise.target_sets }, () => ({
-      weight: "",
+      weight: String(weightFor(exercise) ?? ""),
       reps: String(exercise.target_reps),
       rpe: exercise.target_rpe === null ? "" : String(Number(exercise.target_rpe)),
       is_warmup: false,

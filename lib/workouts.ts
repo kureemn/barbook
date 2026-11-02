@@ -3,6 +3,7 @@
 import type { DashboardWorkout } from "@/lib/dashboard";
 import { client } from "@/lib/neon/client";
 import { missingStarters } from "@/lib/starter-exercises";
+import type { HistorySet } from "@/lib/suggestions";
 
 export const CATEGORIES = ["squat", "bench", "deadlift", "accessory"] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -130,6 +131,20 @@ export async function loadDashboardWorkouts(): Promise<DashboardWorkout[]> {
     .select("performed_on, workout_sets(weight, reps, rpe, is_warmup, exercises(category))");
   if (error) throw error;
   return data as unknown as DashboardWorkout[];
+}
+
+/** Working sets of these exercises, with the date of the workout each came from. */
+export async function loadSetHistory(exerciseIds: string[]): Promise<HistorySet[]> {
+  const { data, error } = await client
+    .from("workout_sets")
+    .select("exercise_id, weight, reps, rpe, workouts!inner(performed_on, created_at)")
+    .in("exercise_id", exerciseIds)
+    .eq("is_warmup", false);
+  if (error) throw error;
+  const rows = data as unknown as (Omit<HistorySet, "performed_on" | "created_at"> & {
+    workouts: { performed_on: string; created_at: string };
+  })[];
+  return rows.map(({ workouts, ...set }) => ({ ...set, ...workouts }));
 }
 
 /** Returns null when the workout doesn't exist or belongs to someone else. */

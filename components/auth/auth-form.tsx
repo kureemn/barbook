@@ -25,11 +25,13 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setNotice(null);
     setSubmitting(true);
     try {
       const { error: authError } = isSignUp
@@ -43,7 +45,13 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
       // Load the session before navigating, so the next page's guard
       // doesn't send a signed-in user back to the login page.
-      await client.auth.getSession();
+      const { data } = await client.auth.getSession();
+      if (!data?.user) {
+        // Neon's "Verify at Sign-up" setting holds back the session until
+        // the email is confirmed, so /workouts would just bounce them to login.
+        setNotice(`Check ${email} to confirm your account, then log in.`);
+        return;
+      }
       router.replace("/workouts");
     } catch {
       setError("Couldn't reach the login service. Please try again.");
@@ -69,6 +77,11 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {notice && (
+            <Alert role="status">
+              <AlertDescription>{notice}</AlertDescription>
             </Alert>
           )}
           {isSignUp && (

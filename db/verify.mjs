@@ -65,6 +65,14 @@ try {
   );
 
   await client.query("begin");
+  await client.query("create table verify_new_table (id integer)");
+  const access = await client.query(
+    "select has_table_privilege('authenticated', 'verify_new_table', 'select') as allowed"
+  );
+  report("a new table gets no automatic access", !access.rows[0].allowed);
+  await client.query("rollback");
+
+  await client.query("begin");
   await client.query(
     `insert into neon_auth."user" (id, name, email, "emailVerified", "createdAt", "updatedAt")
      values ($1, 'Test A', 'a@test.invalid', true, now(), now()),

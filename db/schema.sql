@@ -5,6 +5,12 @@
 -- stores the owner's id in user_id, which defaults to the signed-in user.
 -- auth.user_id() returns text and the account id is a uuid, hence the casts.
 
+-- New objects get no automatic access. A table is reachable only through its
+-- own grant below, so one that's missing its policies fails closed.
+alter default privileges in schema public revoke all on tables from authenticated;
+alter default privileges in schema public revoke all on sequences from authenticated;
+alter default privileges in schema public revoke all on functions from authenticated;
+
 -- Exercises: the lifts a user trains, such as "Competition squat".
 create table if not exists exercises (
   id          uuid primary key default gen_random_uuid(),

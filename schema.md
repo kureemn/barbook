@@ -78,7 +78,7 @@ erDiagram
 
 Row Level Security is on for every table in `public`. A signed-in user can only read, add, change, or delete rows where `user_id` is their own. Logged-out visitors get nothing. Run `npm run db:verify` to check this.
 
-Neon's "Grant public schema access" option is on because signed-in users need it to reach `auth.user_id()`, which the rules depend on. It also opens every `public` table to signed-in users, so **every new table must turn on Row Level Security**. `db:verify` fails if one doesn't.
+Access is opt-in. New tables get no automatic access, so each one needs its own grant in `db/schema.sql`, next to its Row Level Security rules. `db:verify` fails if a table in `public` is missing Row Level Security, or if new tables start getting automatic access.
 
 ## Did the agent build what I designed?
 

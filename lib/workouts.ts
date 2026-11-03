@@ -140,7 +140,7 @@ export async function loadWorkouts({ starredOnly = false } = {}): Promise<Workou
 export async function loadDashboardWorkouts(): Promise<DashboardWorkout[]> {
   const { data, error } = await client
     .from("workouts")
-    .select("performed_on, workout_sets(weight, reps, rpe, is_warmup, exercises(category))");
+    .select("performed_on, bodyweight, workout_sets(weight, reps, rpe, is_warmup, exercises(name, category))");
   if (error) throw error;
   return data as unknown as DashboardWorkout[];
 }

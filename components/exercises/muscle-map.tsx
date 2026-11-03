@@ -55,13 +55,21 @@ function Figure({ label, shapes, info }: { label: string; shapes: Shapes; info: 
 }
 
 /** Front and back of the body, with the muscles an exercise trains filled in. */
-export function MuscleMap({ info }: { info: ExerciseInfo }) {
+export function MuscleMap({
+  info,
+  description,
+}: {
+  info: ExerciseInfo;
+  description?: string;
+}) {
   const names = (muscles: Muscle[]) => muscles.map((muscle) => MUSCLE_NAMES[muscle]).join(", ");
-  const description = `Body diagram. Main muscles: ${names(info.main)}.${
-    info.also.length > 0 ? ` Also works: ${names(info.also)}.` : ""
-  }`;
+  const label =
+    description ??
+    `Body diagram. Main muscles: ${names(info.main)}.${
+      info.also.length > 0 ? ` Also works: ${names(info.also)}.` : ""
+    }`;
   return (
-    <div role="img" aria-label={description} className="flex shrink-0 gap-1">
+    <div role="img" aria-label={label} className="flex shrink-0 gap-1">
       <Figure label="Front" shapes={FRONT} info={info} />
       <Figure label="Back" shapes={BACK} info={info} />
     </div>

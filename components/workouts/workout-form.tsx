@@ -16,7 +16,7 @@ import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { RestAnnouncement, SetRest, useRestTimer } from "@/components/workouts/rest-timer";
 import { recordSession } from "@/lib/program-runs";
 import type { SessionKey } from "@/lib/programs";
-import { flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
+import { defaultTitle, flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
 import type { Suggestion } from "@/lib/suggestions";
 import type { Template } from "@/lib/templates";
 import { cn, selectClass } from "@/lib/utils";
@@ -137,8 +137,11 @@ export function WorkoutForm({
   const [attempted, setAttempted] = useState(false);
   const [newExerciseFor, setNewExerciseFor] = useState<number | null>(null);
 
+  const fallbackTitle = defaultTitle(
+    groups.map((group) => exercises?.find((exercise) => exercise.id === group.exercise_id)?.name)
+  );
   const validation = validateWorkout({
-    title,
+    title: title.trim() || fallbackTitle,
     performed_on: performedOn,
     bodyweight,
     notes,
@@ -271,10 +274,10 @@ export function WorkoutForm({
 
         <div className="grid items-start gap-4 sm:grid-cols-2">
           <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">Title (optional)</Label>
             <Input
               id="title"
-              required
+              placeholder={fallbackTitle}
               {...errorProps("title-error", errors.title)}
               value={title}
               onChange={(e) => setTitle(e.target.value)}

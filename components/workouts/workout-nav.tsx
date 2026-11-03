@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CalendarDays, ChartLine, ClipboardList, History, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const VIEWS = [
+export const VIEWS = [
   { href: "/workouts", label: "Workouts", icon: History },
   { href: "/program", label: "Program", icon: CalendarDays },
   { href: "/workouts/starred", label: "Starred", icon: Star },
@@ -10,12 +10,18 @@ const VIEWS = [
   { href: "/templates", label: "Templates", icon: ClipboardList },
 ];
 
-/** A bottom tab bar on phones, within thumb reach mid-workout. A row of tabs on bigger screens. */
+/** Which tab a page belongs to, so a workout's own page still lights up Workouts. */
+export function viewFor(pathname: string) {
+  if (pathname.startsWith("/workouts/starred")) return "/workouts/starred";
+  return VIEWS.find((view) => pathname.startsWith(view.href))?.href;
+}
+
+/** The bottom tab bar on phones, within thumb reach. Bigger screens use the top bar's tabs. */
 export function WorkoutNav({ current }: { current: string }) {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-card pb-[env(safe-area-inset-bottom)] sm:static sm:mt-4 sm:flex sm:flex-wrap sm:gap-1 sm:border-0 sm:bg-transparent sm:pb-0"
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {VIEWS.map((view) => {
         const active = view.href === current;
@@ -26,11 +32,11 @@ export function WorkoutNav({ current }: { current: string }) {
             href={view.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-medium outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 sm:min-h-11 sm:flex-row sm:gap-2 sm:rounded-md sm:px-3 sm:text-sm",
-              active ? "text-foreground sm:bg-secondary" : "text-muted-foreground"
+              "flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-medium outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
+              active ? "text-foreground" : "text-muted-foreground"
             )}
           >
-            <Icon className={cn("size-5 sm:size-4", active && "text-primary")} aria-hidden="true" />
+            <Icon className={cn("size-5", active && "text-primary")} aria-hidden="true" />
             {view.label}
           </Link>
         );

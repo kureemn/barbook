@@ -34,6 +34,25 @@ describe("findWorkouts", () => {
     expect(ids({})).toEqual(["new", "mid", "old"]);
   });
 
+  it("finds workouts by exercise name or muscle, not just title", () => {
+    const named = [
+      {
+        ...WORKOUTS[0],
+        title: "Monday",
+        workout_sets: [{ ...WORKOUTS[0].workout_sets[0], exercises: { name: "Romanian Deadlift" } }],
+      },
+      {
+        ...WORKOUTS[1],
+        title: "Tuesday",
+        workout_sets: [{ ...WORKOUTS[1].workout_sets[0], exercises: { name: "Bench" } }],
+      },
+    ];
+    expect(ids({ search: "romanian" }, named)).toEqual(["new"]);
+    expect(ids({ search: "hamstrings" }, named)).toEqual(["new"]);
+    expect(ids({ search: "triceps" }, named)).toEqual(["mid"]);
+    expect(ids({ search: "tuesday" }, named)).toEqual(["mid"]);
+  });
+
   it("searches titles regardless of case and surrounding spaces", () => {
     expect(ids({ search: "  heavy " })).toEqual(["new", "old"]);
   });

@@ -1,3 +1,4 @@
+import { exerciseInfo, MUSCLE_NAMES } from "@/lib/exercise-info";
 import { workoutVolume } from "@/lib/volume";
 import type { Workout } from "@/lib/workouts";
 
@@ -34,6 +35,16 @@ export function filtersToQuery({ search, exerciseId, sort }: WorkoutFilters) {
   return params.toString();
 }
 
+/** Everything a lifter might search for: the title, its exercises, and their muscles. */
+function searchText(workout: Workout) {
+  const names = workout.workout_sets.flatMap((set) => set.exercises?.name ?? []);
+  const muscles = names.flatMap((name) => {
+    const info = exerciseInfo(name);
+    return info ? [...info.main, ...info.also].map((muscle) => MUSCLE_NAMES[muscle]) : [];
+  });
+  return [workout.title, ...names, ...muscles].join(" ").toLowerCase();
+}
+
 /**
  * Applies the search, exercise filter, and sort. Expects workouts newest first,
  * as loadWorkouts returns them, and uses that order to settle ties.
@@ -42,7 +53,7 @@ export function findWorkouts(workouts: Workout[], { search, exerciseId, sort }: 
   const term = search.trim().toLowerCase();
   const matches = workouts.filter(
     (workout) =>
-      workout.title.toLowerCase().includes(term) &&
+      searchText(workout).includes(term) &&
       (!exerciseId || workout.workout_sets.some((set) => set.exercise_id === exerciseId))
   );
 

@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button";
 import { loadActiveRun, type ProgramRun } from "@/lib/program-runs";
 import { DAYS, DELOAD_WEEK, nextSession, PROGRAM_NAME, WEEKS } from "@/lib/programs";
 
-const SURFACE = "mt-0 overflow-hidden rounded-xl bg-foreground text-background sm:mt-6";
+const SURFACE = "overflow-hidden rounded-xl bg-primary text-primary-foreground";
 const PLATES_WITHOUT_PROGRAM = 3;
 
 function HeroLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm font-semibold underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-background/60"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-sm text-sm font-semibold underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-foreground/60"
     >
       {children}
     </Link>
@@ -45,15 +45,15 @@ function Hero({
         <BarbellArt plates={plates} />
       </div>
       <div className="p-5 pt-4 sm:p-6 sm:pt-5">
-        {eyebrow && <p className="text-sm font-semibold tracking-wider uppercase opacity-70">{eyebrow}</p>}
+        {eyebrow && <p className="text-sm font-semibold tracking-wider uppercase">{eyebrow}</p>}
         <h2 className="mt-1 text-6xl leading-[0.9] font-bold tracking-wide uppercase sm:text-7xl">
           {title}
         </h2>
-        <p className="mt-3 text-sm opacity-70">{detail}</p>
+        <p className="mt-3 text-sm">{detail}</p>
         <Button
           asChild
           size="lg"
-          className="mt-5 h-16 w-full font-heading text-2xl font-bold tracking-wide uppercase focus-visible:ring-background/60"
+          className="mt-5 h-16 w-full font-heading text-2xl font-bold tracking-wide uppercase bg-foreground text-background hover:bg-foreground/85"
         >
           <Link href={href}>
             <Play className="size-5 fill-current" aria-hidden="true" />

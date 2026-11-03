@@ -21,6 +21,7 @@ import {
   type WorkoutFilters,
 } from "@/lib/find-workouts";
 import { MUSCLE_NAMES, workoutMuscles } from "@/lib/exercise-info";
+import { exerciseNames } from "@/lib/set-groups";
 import { cn, selectClass } from "@/lib/utils";
 import { workoutVolume } from "@/lib/volume";
 import { dateParts, formatDate, loadExercises, loadWorkouts, type Exercise, type Workout } from "@/lib/workouts";
@@ -92,12 +93,12 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
         )}
       >
         {!starredOnly && (
-          <div className="lg:sticky lg:top-6">
+          <div className="lg:sticky lg:top-24">
             <NextSessionCard />
           </div>
         )}
 
-        <section aria-label={starredOnly ? "Starred workouts" : "Workout history"} className="mt-8 lg:mt-6">
+        <section aria-label={starredOnly ? "Starred workouts" : "Workout history"} className="mt-8 lg:mt-0">
           {workouts.length === 0 ? (
             <p className="text-muted-foreground">
               {starredOnly
@@ -121,7 +122,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
                 <div className="flex gap-2">
                   <div className="relative min-w-0 flex-1">
                     <Label htmlFor="workout-search" className="sr-only">
-                      Search by title
+                      Search by exercise, muscle, or title
                     </Label>
                     <Search
                       className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -131,8 +132,8 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
                       id="workout-search"
                       type="search"
                       enterKeyHint="search"
-                      placeholder="Search by title"
-                      className="border-border bg-transparent pl-9 dark:bg-transparent"
+                      placeholder="Exercise or muscle"
+                      className="bg-card pl-9"
                       value={filters.search}
                       onChange={(e) => updateFilters({ ...filters, search: e.target.value })}
                     />
@@ -234,6 +235,9 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
                             </span>
                             {workingSets} working {workingSets === 1 ? "set" : "sets"} ·{" "}
                             {workoutVolume(workout.workout_sets).toLocaleString()} lb
+                          </span>
+                          <span className="mt-1 block text-sm tabular-nums">
+                            {exerciseNames(workout.workout_sets.map((set) => set.exercises?.name)).join(" · ")}
                           </span>
                           {muscles.length > 0 && (
                             <span className="mt-1 block text-xs text-muted-foreground">

@@ -23,6 +23,16 @@ It measured the page's colors. Cards were only 1.11:1 against the page, so surfa
 - Added a barbell drawing that gains one plate per finished program week.
 - Put the exercise and sort filters behind a Filters button, and turned workout cards into rows.
 
+## My feedback on the first version
+
+> Something about how the tabs are just kind of like it's just my logout name at the top and then bar book, whatever we're calling it. And then like these tabs just next to each other. Almost feels like it's out of place. And then searching workouts by title I know I've been adding titles, but I guess more importantly, what does the title get at? I don't know, like it's not typically how I go about my workouts. And then, yeah, something about this does feel still a little dark.
+
+The agent then:
+
+- Moved the tabs into one top bar with the logo and Log out. Phones keep the bottom tab bar.
+- Made search find exercises and muscles as well as titles, and made titles optional. A workout with no title is named after its exercises.
+- Switched the whole app to a light theme with a red hero card, and validated darker chart colors for the white background.
+
 ## Decisions
 
 The direction was the agent's choice, as I asked. The PR stayed open until I reviewed it.

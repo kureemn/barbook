@@ -37,3 +37,16 @@ export function setsFromTemplate(
     })),
   }));
 }
+
+/** Each exercise once, in the order it was trained. */
+export function exerciseNames(names: (string | undefined)[]) {
+  return [...new Set(names.filter((name): name is string => Boolean(name)))];
+}
+
+/** Names a workout from its exercises, for a lifter who doesn't want to write a title. */
+export function defaultTitle(names: (string | undefined)[]) {
+  const unique = exerciseNames(names);
+  if (unique.length === 0) return "Workout";
+  if (unique.length <= 3) return unique.join(", ");
+  return `${unique.slice(0, 3).join(", ")} +${unique.length - 3}`;
+}

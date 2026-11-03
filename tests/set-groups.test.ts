@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { defaultTitle, flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
+import {
+  defaultTitle,
+  flattenGroups,
+  groupByExercise,
+  keepDoneSets,
+  setCounts,
+  setsFromTemplate,
+} from "@/lib/set-groups";
 
 const set = (exercise_id: string, weight: number) => ({ exercise_id, weight });
 
@@ -98,5 +105,27 @@ describe("defaultTitle", () => {
 
   it("falls back when no exercise is chosen yet", () => {
     expect(defaultTitle([undefined, ""])).toBe("Workout");
+  });
+});
+
+describe("checked-off sets", () => {
+  const groups = [
+    { exercise_id: "squat", sets: [{ key: 1, done: true }, { key: 2, done: false }] },
+    { exercise_id: "curl", sets: [{ key: 3, done: false }] },
+  ];
+
+  it("counts what's done out of the total", () => {
+    expect(setCounts(groups)).toEqual({ done: 1, total: 3 });
+  });
+
+  it("keeps only checked sets and drops exercises left with none", () => {
+    expect(keepDoneSets(groups)).toEqual([
+      { exercise_id: "squat", sets: [{ key: 1, done: true }] },
+    ]);
+  });
+
+  it("doesn't change the original groups", () => {
+    keepDoneSets(groups);
+    expect(groups[0].sets).toHaveLength(2);
   });
 });

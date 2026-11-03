@@ -3,20 +3,36 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { ExerciseDetails } from "@/components/exercises/exercise-details";
 import { errorProps, FieldError, focusFirstError } from "@/components/field-error";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AddExerciseDialog } from "@/components/workouts/add-exercise-dialog";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
-import { RestAnnouncement, SetRest, useRestTimer } from "@/components/workouts/rest-timer";
+import { RestAnnouncement, RestLength, SetRest, useRestTimer } from "@/components/workouts/rest-timer";
 import { recordSession } from "@/lib/program-runs";
 import type { SessionKey } from "@/lib/programs";
-import { defaultTitle, flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
+import {
+  defaultTitle,
+  flattenGroups,
+  groupByExercise,
+  keepDoneSets,
+  setCounts,
+  setsFromTemplate,
+} from "@/lib/set-groups";
 import type { Suggestion } from "@/lib/suggestions";
 import type { Template } from "@/lib/templates";
 import { cn, selectClass } from "@/lib/utils";
@@ -31,6 +47,7 @@ import {
   type Workout,
 } from "@/lib/workouts";
 import { validateWorkout } from "@/lib/validation";
+import { clearDraft, draftKey, readDraft, writeDraft } from "@/lib/workout-draft";
 
 const NEW_EXERCISE = "__new__";
 
@@ -41,6 +58,7 @@ type SetRow = {
   reps: string;
   rpe: string;
   is_warmup: boolean;
+  done: boolean;
 };
 
 type ExerciseGroup = {
@@ -52,7 +70,7 @@ type ExerciseGroup = {
 };
 
 function blankSet(key: number): SetRow {
-  return { key, weight: "", reps: "", rpe: "", is_warmup: false };
+  return { key, weight: "", reps: "", rpe: "", is_warmup: false, done: false };
 }
 
 /** Starts from the saved sets, the template's targets, or one empty exercise. */
@@ -69,7 +87,7 @@ function startingGroups(
     ).map((group, index) => ({
       key: index,
       exercise_id: group.exercise_id,
-      sets: group.sets.map((set) => ({ ...set, key: setKey++ })),
+      sets: group.sets.map((set) => ({ ...set, key: setKey++, done: false })),
       suggestion: suggestions[targets[index].id],
       target: { reps: targets[index].target_reps, rpe: targets[index].target_rpe },
     }));
@@ -85,6 +103,7 @@ function startingGroups(
       reps: String(set.reps),
       rpe: set.rpe === null ? "" : String(set.rpe),
       is_warmup: set.is_warmup,
+      done: false,
     })),
   }));
 }
@@ -122,40 +141,71 @@ export function WorkoutForm({
 }) {
   const router = useRouter();
   const timer = useRestTimer();
-  const [groups, setGroups] = useState(() => startingGroups(workout, template, suggestions));
-  // Past every starting key, since each group has at least one set.
-  const nextKey = useRef(groups.reduce((total, group) => total + group.sets.length, 0));
+  // Saved workouts are corrected after the fact, so only new ones track sets and keep drafts.
+  const live = !workout;
+  const storageKey = draftKey({ program, templateId: template?.id });
+  const [restored] = useState(() => (live ? readDraft<ExerciseGroup>(storageKey) : null));
+  const [groups, setGroups] = useState(
+    () => restored?.groups ?? startingGroups(workout, template, suggestions)
+  );
+  // Past every key in use, including any added before a draft was saved.
+  const nextKey = useRef(
+    Math.max(...groups.flatMap((group) => [group.key, ...group.sets.map((set) => set.key)])) + 1
+  );
   const [exercises, setExercises] = useState<Exercise[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [title, setTitle] = useState(workout?.title ?? template?.name ?? "");
-  const [performedOn, setPerformedOn] = useState(workout?.performed_on ?? todayLocal());
-  const [bodyweight, setBodyweight] = useState(workout?.bodyweight?.toString() ?? "");
-  const [notes, setNotes] = useState(workout?.notes ?? "");
+  const [title, setTitle] = useState(restored?.title ?? workout?.title ?? template?.name ?? "");
+  const [performedOn, setPerformedOn] = useState(
+    restored?.performedOn ?? workout?.performed_on ?? todayLocal()
+  );
+  const [bodyweight, setBodyweight] = useState(
+    restored?.bodyweight ?? workout?.bodyweight?.toString() ?? ""
+  );
+  const [notes, setNotes] = useState(restored?.notes ?? workout?.notes ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   // Messages wait for the first save attempt, then update as fields change.
   const [attempted, setAttempted] = useState(false);
   const [newExerciseFor, setNewExerciseFor] = useState<number | null>(null);
+  const [showDetails, setShowDetails] = useState(!live);
+  const [confirmingFinish, setConfirmingFinish] = useState(false);
+  // Nothing is worth saving until the lifter changes something.
+  const untouched = useRef(JSON.stringify({ title, performedOn, bodyweight, notes, groups }));
+
+  function validate(list: ExerciseGroup[]) {
+    const names = list.map(
+      (group) => exercises?.find((exercise) => exercise.id === group.exercise_id)?.name
+    );
+    return validateWorkout({
+      title: title.trim() || defaultTitle(names),
+      performed_on: performedOn,
+      bodyweight,
+      notes,
+      sets: flattenGroups(list).map(({ id, exercise_id, weight, reps, rpe, is_warmup }) => ({
+        id,
+        exercise_id,
+        weight,
+        reps,
+        rpe,
+        is_warmup,
+      })),
+    });
+  }
 
   const fallbackTitle = defaultTitle(
     groups.map((group) => exercises?.find((exercise) => exercise.id === group.exercise_id)?.name)
   );
-  const validation = validateWorkout({
-    title: title.trim() || fallbackTitle,
-    performed_on: performedOn,
-    bodyweight,
-    notes,
-    sets: flattenGroups(groups).map(({ id, exercise_id, weight, reps, rpe, is_warmup }) => ({
-      id,
-      exercise_id,
-      weight,
-      reps,
-      rpe,
-      is_warmup,
-    })),
-  });
-  const errors = attempted ? validation.errors : {};
+  const errors = attempted ? validate(groups).errors : {};
   const hasErrors = Object.keys(errors).length > 0;
+  const counts = setCounts(groups);
+  const detailsOpen =
+    showDetails || Boolean(errors.title || errors.performed_on || errors.bodyweight);
+
+  useEffect(() => {
+    if (!live) return;
+    const draft = { title, performedOn, bodyweight, notes, groups };
+    if (JSON.stringify(draft) !== untouched.current) writeDraft(storageKey, draft);
+  }, [live, storageKey, title, performedOn, bodyweight, notes, groups]);
 
   useEffect(() => {
     loadExercises()
@@ -189,7 +239,7 @@ export function WorkoutForm({
       current.map((group) => {
         if (group.key !== groupKey) return group;
         const last = group.sets[group.sets.length - 1];
-        return { ...group, sets: [...group.sets, { ...last, id: undefined, key }] };
+        return { ...group, sets: [...group.sets, { ...last, id: undefined, key, done: false }] };
       })
     );
   }
@@ -215,16 +265,27 @@ export function WorkoutForm({
     ]);
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  // Checking off a set starts the rest, unless it was the last set left.
+  function toggleDone(groupKey: number, set: SetRow) {
+    const done = !set.done;
+    changeSet(groupKey, set.key, { done });
+    if (!done) timer.releaseSet(set.key);
+    else if (counts.done + 1 < counts.total) timer.start(set.key);
+    else timer.stop();
+  }
+
+  async function save(list: ExerciseGroup[]) {
     setError(null);
     setAttempted(true);
-    if (!validation.success) {
+    setConfirmingFinish(false);
+    setGroups(list);
+    const result = validate(list);
+    if (!result.success) {
       focusFirstError();
       return;
     }
     setSaving(true);
-    const { sets, ...details } = validation.data;
+    const { sets, ...details } = result.data;
     try {
       if (workout) {
         await updateWorkout(workout.id, details, sets);
@@ -242,80 +303,144 @@ export function WorkoutForm({
             throw recordError;
           }
         }
-        router.replace(`/workouts/${id}`);
+        clearDraft(storageKey);
+        toast.success(program ? `${template?.name} logged.` : "Workout saved.");
+        // Home shows what's next, which is what a lifter wants after finishing.
+        router.replace("/workouts");
       }
     } catch {
+      // The message at the top may be off screen, since Finish stays pinned to the bottom.
+      toast.error("Couldn't save this workout. Your entries are still here.");
       setError("Couldn't save this workout. Check the details and try again.");
       setSaving(false);
     }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    // Checking nothing off means this isn't being tracked live, like typing in an old workout.
+    if (live && counts.done > 0 && counts.done < counts.total) {
+      setConfirmingFinish(true);
+      return;
+    }
+    void save(groups);
+  }
+
+  function startOver() {
+    clearDraft(storageKey);
+    window.location.reload();
   }
 
   if (loadError) return <PageError message={loadError} />;
   if (!exercises) return <PageLoading />;
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <h1 className="text-4xl font-bold tracking-wide uppercase">
-        {workout ? "Edit workout" : "Workout"}
-      </h1>
-      {template && (
-        <p className="mt-2 text-sm text-muted-foreground">
-          Started from {template.name}. Your targets and any suggested weights are filled in, so
-          change anything that differed.
-        </p>
+    <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-4 pb-28">
+      {live && (
+        <Link
+          href="/workouts"
+          className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground underline-offset-4 hover:underline"
+        >
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          Back to workouts
+        </Link>
       )}
+      <h1 className="text-4xl leading-none font-bold tracking-wide uppercase">
+        {workout ? "Edit workout" : (template?.name ?? "Workout")}
+      </h1>
 
-      <form noValidate onSubmit={handleSubmit} className="mt-6 flex flex-col gap-6">
+      <form noValidate onSubmit={handleSubmit} className="mt-2 flex flex-col gap-4">
+        {restored && (
+          <Alert>
+            <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+              Picked up where you left off.
+              <Button type="button" variant="outline" onClick={startOver}>
+                Start over
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         {(error || hasErrors) && (
           <Alert variant="destructive">
             <AlertDescription>{error ?? "Fix the marked fields to save this workout."}</AlertDescription>
           </Alert>
         )}
 
-        <div className="grid items-start gap-4 sm:grid-cols-2">
-          <div className="grid gap-2 sm:col-span-2">
-            <Label htmlFor="title">Title (optional)</Label>
-            <Input
-              id="title"
-              placeholder={fallbackTitle}
-              {...errorProps("title-error", errors.title)}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-            <FieldError id="title-error" message={errors.title} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="performed-on">Date</Label>
-            <Input
-              id="performed-on"
-              type="date"
-              required
-              {...errorProps("performed-on-error", errors.performed_on)}
-              value={performedOn}
-              onChange={(e) => setPerformedOn(e.target.value)}
-            />
-            <FieldError id="performed-on-error" message={errors.performed_on} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="bodyweight">Bodyweight (lb, optional)</Label>
-            <Input
-              id="bodyweight"
-              type="number"
-              inputMode="decimal"
-              min="1"
-              step="0.1"
-              {...errorProps("bodyweight-error", errors.bodyweight)}
-              value={bodyweight}
-              onChange={(e) => setBodyweight(e.target.value)}
-            />
-            <FieldError id="bodyweight-error" message={errors.bodyweight} />
-          </div>
+        <div>
+          <button
+            type="button"
+            aria-expanded={detailsOpen}
+            aria-controls="workout-details"
+            className="flex min-h-11 w-full items-center justify-between gap-2 rounded-md text-sm text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            onClick={() => setShowDetails(!showDetails)}
+          >
+            <span>
+              {performedOn ? formatDate(performedOn) : "No date"}
+              {bodyweight && ` · ${bodyweight} lb`}
+            </span>
+            <span className="flex items-center gap-1 font-medium text-foreground">
+              Date and details
+              <ChevronDown
+                className={cn("size-4 transition-transform", detailsOpen && "rotate-180")}
+                aria-hidden="true"
+              />
+            </span>
+          </button>
+          {detailsOpen && (
+            <div id="workout-details" className="mt-2 grid items-start gap-4 sm:grid-cols-2">
+              <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="title">Title (optional)</Label>
+                <Input
+                  id="title"
+                  placeholder={fallbackTitle}
+                  {...errorProps("title-error", errors.title)}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+                <FieldError id="title-error" message={errors.title} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="performed-on">Date</Label>
+                <Input
+                  id="performed-on"
+                  type="date"
+                  required
+                  {...errorProps("performed-on-error", errors.performed_on)}
+                  value={performedOn}
+                  onChange={(e) => setPerformedOn(e.target.value)}
+                />
+                <FieldError id="performed-on-error" message={errors.performed_on} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="bodyweight">Bodyweight (lb, optional)</Label>
+                <Input
+                  id="bodyweight"
+                  type="number"
+                  inputMode="decimal"
+                  min="1"
+                  step="0.1"
+                  {...errorProps("bodyweight-error", errors.bodyweight)}
+                  value={bodyweight}
+                  onChange={(e) => setBodyweight(e.target.value)}
+                />
+                <FieldError id="bodyweight-error" message={errors.bodyweight} />
+              </div>
+            </div>
+          )}
         </div>
 
         <section aria-labelledby="exercises-heading" className="flex flex-col gap-3">
-          <h2 id="exercises-heading" className="text-2xl font-semibold tracking-wide uppercase">
-            Exercises
-          </h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="exercises-heading" className="text-2xl font-semibold tracking-wide uppercase">
+              Exercises
+            </h2>
+            {live && <RestLength timer={timer} />}
+          </div>
+          {live && (
+            <p className="text-sm text-muted-foreground">
+              Tap ✓ after each set to start your rest.
+            </p>
+          )}
           {groups.map((group, groupIndex) => {
             // Errors are keyed by a set's place in the whole workout.
             const firstSet = groups
@@ -323,12 +448,12 @@ export function WorkoutForm({
               .reduce((total, earlier) => total + earlier.sets.length, 0);
             const exerciseError = errors[`sets.${firstSet}.exercise_id`];
             return (
-              <fieldset key={group.key} className="rounded-lg border bg-card p-4">
-                <legend className="px-1 font-heading text-lg font-semibold tracking-wide uppercase">
-                  Exercise {groupIndex + 1}
-                </legend>
+              <fieldset key={group.key} className="rounded-lg border bg-card p-3">
+                <legend className="sr-only">Exercise {groupIndex + 1}</legend>
                 <div className="grid gap-2">
-                  <Label htmlFor={`exercise-${group.key}`}>Exercise</Label>
+                  <Label htmlFor={`exercise-${group.key}`} className="sr-only">
+                    Exercise
+                  </Label>
                   <select
                     id={`exercise-${group.key}`}
                     className={selectClass}
@@ -362,6 +487,7 @@ export function WorkoutForm({
                 </div>
                 <div className="mt-3 empty:hidden">
                   <ExerciseDetails
+                    collapsed
                     name={exercises.find((exercise) => exercise.id === group.exercise_id)?.name}
                   />
                 </div>
@@ -389,7 +515,14 @@ export function WorkoutForm({
                     return (
                       <li key={set.key} className="border-t pt-3">
                         <div role="group" aria-label={`Set ${setIndex + 1}`}>
-                          <div className="grid grid-cols-[1.75rem_1fr_1fr_1fr_2.75rem] items-start gap-2">
+                          <div
+                            className={cn(
+                              "grid items-start gap-2",
+                              live
+                                ? "grid-cols-[1.75rem_1fr_1fr_1fr_2.75rem]"
+                                : "grid-cols-[1.75rem_1fr_1fr_1fr]"
+                            )}
+                          >
                             <span
                               aria-hidden="true"
                               className={cn(
@@ -397,7 +530,7 @@ export function WorkoutForm({
                                 setIndex === 0 ? "mt-[31px]" : "mt-2"
                               )}
                             >
-                              {setIndex + 1}
+                              {set.is_warmup ? "W" : setIndex + 1}
                             </span>
                             <div className="grid min-w-0 gap-2">
                               <SetLabel
@@ -474,37 +607,47 @@ export function WorkoutForm({
                                 message={errors[`${path}.rpe`]}
                               />
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className={setIndex === 0 ? "mt-[23px]" : undefined}
-                              aria-label={`Remove set ${setIndex + 1}`}
-                              disabled={group.sets.length === 1}
-                              onClick={() => removeSet(group.key, set.key)}
-                            >
-                              <Trash2 className="size-4" aria-hidden="true" />
-                            </Button>
+                            {live && (
+                              <Button
+                                type="button"
+                                variant={set.done ? "default" : "outline"}
+                                size="icon"
+                                className={setIndex === 0 ? "mt-[23px]" : undefined}
+                                aria-pressed={set.done}
+                                aria-label={`Mark set ${setIndex + 1} done`}
+                                onClick={() => toggleDone(group.key, set)}
+                              >
+                                <Check className="size-5" aria-hidden="true" />
+                              </Button>
+                            )}
                           </div>
-                          <div className="mt-2 flex items-center gap-2">
-                            <label className="flex min-h-11 shrink-0 items-center gap-1.5 text-xs">
-                              <input
-                                type="checkbox"
-                                className="size-5 accent-primary"
-                                checked={set.is_warmup}
-                                onChange={(e) =>
-                                  changeSet(group.key, set.key, { is_warmup: e.target.checked })
-                                }
-                              />
-                              Warm-up
-                            </label>
-                            <div className="min-w-0 flex-1">
-                              <SetRest
-                                timer={timer}
-                                setKey={set.key}
-                                setNumber={setIndex + 1}
-                              />
+                          {!set.done && (
+                            <div className="mt-1 flex items-center justify-between gap-2">
+                              <label className="flex min-h-11 items-center gap-1.5 text-xs">
+                                <input
+                                  type="checkbox"
+                                  className="size-5 accent-primary"
+                                  checked={set.is_warmup}
+                                  onChange={(e) =>
+                                    changeSet(group.key, set.key, { is_warmup: e.target.checked })
+                                  }
+                                />
+                                Warm-up
+                              </label>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                aria-label={`Remove set ${setIndex + 1}`}
+                                disabled={group.sets.length === 1}
+                                onClick={() => removeSet(group.key, set.key)}
+                              >
+                                <Trash2 className="size-4" aria-hidden="true" />
+                              </Button>
                             </div>
+                          )}
+                          <div className="mt-2 empty:hidden">
+                            <SetRest timer={timer} setKey={set.key} />
                           </div>
                         </div>
                       </li>
@@ -550,18 +693,55 @@ export function WorkoutForm({
           <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={saving}>
-            {saving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            Save workout
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={workout ? `/workouts/${workout.id}` : "/workouts"}>Cancel</Link>
-          </Button>
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-card pb-[env(safe-area-inset-bottom)]">
+          <div className="mx-auto flex w-full max-w-2xl items-center gap-3 px-4 py-3">
+            {live ? (
+              <p className="shrink-0 text-sm tabular-nums" aria-live="polite">
+                {counts.done} of {counts.total} sets
+              </p>
+            ) : (
+              <Button asChild variant="outline" className="h-12">
+                <Link href={`/workouts/${workout?.id}`}>Cancel</Link>
+              </Button>
+            )}
+            <Button
+              type="submit"
+              disabled={saving}
+              className="h-12 flex-1 font-heading text-xl font-bold tracking-wide uppercase"
+            >
+              {saving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {live ? "Finish workout" : "Save changes"}
+            </Button>
+          </div>
         </div>
       </form>
 
       <RestAnnouncement timer={timer} />
+
+      <Dialog open={confirmingFinish} onOpenChange={setConfirmingFinish}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {counts.total - counts.done} {counts.total - counts.done === 1 ? "set isn't" : "sets aren't"}{" "}
+              checked off
+            </DialogTitle>
+            <DialogDescription>
+              Did you skip {counts.total - counts.done === 1 ? "it" : "them"}, or just forget to tap ✓?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmingFinish(false)}>
+              Keep logging
+            </Button>
+            <Button variant="outline" onClick={() => void save(groups)}>
+              Save all {counts.total}
+            </Button>
+            <Button onClick={() => void save(keepDoneSets(groups))}>
+              Save {counts.done} checked
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AddExerciseDialog
         open={newExerciseFor !== null}

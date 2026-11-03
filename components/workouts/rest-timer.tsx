@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Square, Timer } from "lucide-react";
+import { Plus, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatTime, REST_PRESETS, savedRest, secondsLeft } from "@/lib/rest-timer";
 import { cn, selectClass } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 
 const STORAGE_KEY = "barbook-rest-seconds";
 
@@ -154,16 +155,31 @@ export function useRestTimer() {
 
 export type RestTimerState = ReturnType<typeof useRestTimer>;
 
-/** Sits under a set: starts the rest, then shows its countdown and the alert. */
-export function SetRest({
-  timer,
-  setKey,
-  setNumber,
-}: {
-  timer: RestTimerState;
-  setKey: number;
-  setNumber: number;
-}) {
+/** One rest length for the whole workout, since it rarely changes between sets. */
+export function RestLength({ timer }: { timer: RestTimerState }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Label htmlFor="rest-length" className="text-sm">
+        Rest
+      </Label>
+      <select
+        id="rest-length"
+        className={cn(selectClass, "w-20 shrink-0 tabular-nums")}
+        value={timer.restSeconds}
+        onChange={(e) => timer.chooseRest(Number(e.target.value))}
+      >
+        {REST_PRESETS.map((seconds) => (
+          <option key={seconds} value={seconds}>
+            {formatTime(seconds)}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+/** Sits under a checked-off set: shows its countdown, then the alert. */
+export function SetRest({ timer, setKey }: { timer: RestTimerState; setKey: number }) {
   if (timer.activeSet === setKey) {
     return (
       <div className="flex items-center justify-between gap-2">
@@ -191,39 +207,15 @@ export function SetRest({
     );
   }
 
-  return (
-    <div className="flex flex-col gap-2">
-      {timer.finishedSet === setKey && (
-        <p className="rounded-md bg-primary px-3 py-2 font-semibold text-primary-foreground">
-          Rest over. Time for your next set.
-        </p>
-      )}
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="min-w-0 flex-1 px-2"
-          aria-label={`Start ${formatTime(timer.restSeconds)} rest after set ${setNumber}`}
-          onClick={() => timer.start(setKey)}
-        >
-          <Timer className="size-4" aria-hidden="true" />
-          Rest
-        </Button>
-        <select
-          aria-label={`Rest length for set ${setNumber}`}
-          className={cn(selectClass, "w-20 shrink-0 tabular-nums")}
-          value={timer.restSeconds}
-          onChange={(e) => timer.chooseRest(Number(e.target.value))}
-        >
-          {REST_PRESETS.map((seconds) => (
-            <option key={seconds} value={seconds}>
-              {formatTime(seconds)}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-  );
+  if (timer.finishedSet === setKey) {
+    return (
+      <p className="rounded-md bg-primary px-3 py-2 font-semibold text-primary-foreground">
+        Rest over. Time for your next set.
+      </p>
+    );
+  }
+
+  return null;
 }
 
 /** Tells screen readers when a rest ends, without reading out every second. */

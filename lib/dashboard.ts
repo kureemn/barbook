@@ -13,11 +13,12 @@ export type DashboardSet = {
   reps: number;
   rpe: number | null;
   is_warmup: boolean;
-  exercises: { category: string } | null;
+  exercises: { category: string; name?: string } | null;
 };
 
 export type DashboardWorkout = {
   performed_on: string;
+  bodyweight?: number | null;
   workout_sets: DashboardSet[];
 };
 

@@ -6,9 +6,10 @@ import {
   workoutsThisMonth,
   type DashboardWorkout,
 } from "@/lib/dashboard";
+import { cn } from "@/lib/utils";
 import { todayLocal } from "@/lib/workouts";
 
-function Stat({ label, value, note }: { label: string; value: ReactNode; note?: string }) {
+export function Stat({ label, value, note }: { label: string; value: ReactNode; note?: string }) {
   return (
     <div className="rounded-lg border bg-card p-4">
       <dt className="text-sm text-muted-foreground">{label}</dt>
@@ -18,12 +19,18 @@ function Stat({ label, value, note }: { label: string; value: ReactNode; note?: 
   );
 }
 
-export function TrainingStats({ workouts }: { workouts: DashboardWorkout[] }) {
+export function TrainingStats({
+  workouts,
+  extra,
+}: {
+  workouts: DashboardWorkout[];
+  extra?: ReactNode;
+}) {
   const today = todayLocal();
   const total = bestEstimatedTotal(e1rmHistory(workouts));
 
   return (
-    <dl className="grid gap-3 sm:grid-cols-3">
+    <dl className={cn("grid gap-3", extra ? "grid-cols-2 lg:grid-cols-5 [&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1" : "sm:grid-cols-3")}>
       <Stat label="Workouts this month" value={workoutsThisMonth(workouts, today)} />
       <Stat
         label="Volume, last 30 days"
@@ -35,6 +42,7 @@ export function TrainingStats({ workouts }: { workouts: DashboardWorkout[] }) {
         value={total === null ? "Not yet" : `${Math.round(total).toLocaleString()} lb`}
         note={total === null ? "Log squat, bench, and deadlift to see this" : "Best of each lift, added"}
       />
+      {extra}
     </dl>
   );
 }

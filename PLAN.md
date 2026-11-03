@@ -102,3 +102,36 @@ erDiagram
 1. CSV import. I'd enter my history by hand, and the app would still have 9 features, above the 8-feature minimum, but I'd need a smaller replacement to keep my required 3 custom features.
 2. The light theme.
 3. Filtering by exercise, keeping title search and sort, which still meets the requirement.
+
+## 8. Plan vs. Reality
+
+Sections 1 to 7 are the original plan, unchanged. This table shows what happened. The app has all 7 spine features, plus custom features that changed from the plan as I used it.
+
+| Planned feature | Shipped/Changed/Cut | Status | Learning | What changed and why |
+|---|---|---|---|---|
+| 1. Sign up and login | Shipped | Done | A hosted auth service only works from sites you've allowed, including localhost. | Built as planned with email and password. |
+| 2. Data model | Shipped | Done | The Data API doesn't see new tables until its schema cache is refreshed, which showed up as a 400 error in [PR #12](https://github.com/kureemn/barbook/pull/12). | Built as planned, with two more tables later for programs. |
+| 3. Workout CRUD | Changed | Done | I only found the form's problem by using it. | The form asked for an exercise on every set, so I grouped sets under each exercise, because that's how I actually train. |
+| 4. Validation | Changed | Done | A rule can be correct and still ask for something the user doesn't care about. | A title is no longer needed when logging, because I don't think of workouts by title, so a blank one is named after its exercises. |
+| 5. Stars | Shipped | Done | A small feature can still have bugs, and testing caught them before merge. | Built as planned. |
+| 6. Find things | Changed | Done | I planned search around titles without asking whether that's how I look things up. | Search now also finds exercises and muscles, because that's how I think about training. |
+| 7. Dashboard | Changed | Done | Estimated max alone doesn't tell a lifter enough about progress. | Added records, lift progress, weekly volume, sessions, sets per muscle, and strength vs. bodyweight, because I wanted more ways to see progress. |
+| 8. Program templates | Shipped | Done | Templates were still more setup than I wanted before a session. | Built as planned, and later joined by ready-made programs. |
+| 9. Suggested weights | Changed | Done | Suggestions look like facts unless they show where they came from. | Works as planned for templates and programs. 5/3/1 also uses a training max from my best logged set. |
+| 10. CSV import | Cut | Backlogged | I planned it for a problem I don't really have, since I don't use Excel. | Replaced with a rest timer, which I'd use every session, and which became my third custom feature. |
+| Light theme (section 6) | Changed | Done | I planned for a dim gym, but on screen the dark design felt plain and flat. | Light is now the default, with a dark mode switch, because I wanted it brighter. |
+| Competition red `#E5484D` (section 6) | Changed | Done | A shared set of color tokens let me restyle the whole app at once. | Now a brighter `#F03E1F`, because the original looked muted. Text on it still meets the contrast target. |
+| Papa Parse (section 5) | Cut | Backlogged | A tool picked for one feature goes when the feature does. | Never installed, because CSV import was cut. |
+| Not planned: starter exercises | Added | Done | An empty exercise list was a barrier to logging anything. | Added 34 exercises, because I wanted to pick my lifts instead of typing them. |
+| Not planned: rest timer | Added | Done | It took three rounds of my feedback to get right. | Moved from a bottom bar to each set, then to starting when I check off a set. |
+| Not planned: muscles and equipment | Added | Done | Fitbod showed me that knowing what an exercise targets is useful. | Added body diagrams and equipment drawings made for this app. |
+| Not planned: programs and Start workout | Added | Done | Logging alone doesn't tell you what to do today. | Added three 4-day programs with a Start workout button. Each says where it comes from, and they fit barbells and dumbbells because that's mostly what I have. |
+| Not planned: workout mode | Added | Done | Measuring the screen exposed what looking at it hadn't: 109 controls, and entries lost on reload. | Added set check-offs, saved drafts, and a pinned Finish button, because it was built like a form to fill out afterward. |
+| Not planned: wider desktop layouts | Added | Done | Designing mobile first left big screens looking bare. | Main pages now use the screen, because the desktop felt empty. |
+
+**Other notes on the plan**
+
+- **Inspiration:** Hevy and Strong in section 6 were the agent's suggestions, not apps I chose from experience. Fitbod ended up being my real reference.
+- **Risk in section 7:** suggested weights depending on RPE turned out to be a real risk. Sets logged without RPE count as all-out, which would have lowered 5/3/1 training maxes until I used the best logged set instead.
+- **Feature loop:** every PR has a linked Issue and a feature branch. The only commit directly on `main` is the empty first commit that started the repository, made before the plan PR.
+

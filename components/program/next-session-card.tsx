@@ -7,6 +7,7 @@ import { BarbellArt } from "@/components/program/barbell-art";
 import { Button } from "@/components/ui/button";
 import { loadActiveRun, type ProgramRun } from "@/lib/program-runs";
 import { DAYS, DELOAD_WEEK, nextSession, PROGRAM_NAME, WEEKS } from "@/lib/programs";
+import { cn } from "@/lib/utils";
 
 const SURFACE = "overflow-hidden rounded-xl bg-primary text-primary-foreground";
 const PLATES_WITHOUT_PROGRAM = 3;
@@ -27,6 +28,8 @@ function Hero({
   eyebrow,
   title,
   detail,
+  wideDetail,
+  wideSide,
   href,
   plates,
   links,
@@ -35,6 +38,9 @@ function Hero({
   eyebrow?: string;
   title: string;
   detail: string;
+  /** Replaces the detail on a large screen, when the side panel already covers it. */
+  wideDetail?: string;
+  wideSide?: ReactNode;
   href: string;
   plates: number;
   links: ReactNode;
@@ -44,25 +50,48 @@ function Hero({
       <div className="-mx-6 pt-5">
         <BarbellArt plates={plates} />
       </div>
-      <div className="p-5 pt-4 sm:p-6 sm:pt-5">
-        {eyebrow && <p className="text-sm font-semibold tracking-wider uppercase">{eyebrow}</p>}
-        <h2 className="mt-1 text-6xl leading-[0.9] font-bold tracking-wide uppercase sm:text-7xl">
-          {title}
-        </h2>
-        <p className="mt-3 text-sm">{detail}</p>
-        <Button
-          asChild
-          size="lg"
-          className="mt-5 h-16 w-full font-heading text-2xl font-bold tracking-wide uppercase bg-foreground text-background hover:bg-foreground/85"
-        >
-          <Link href={href}>
-            <Play className="size-5 fill-current" aria-hidden="true" />
-            Start workout
-          </Link>
-        </Button>
-        <div className="mt-2 flex flex-wrap justify-between gap-x-4">{links}</div>
+      <div className="p-5 pt-4 sm:p-6 sm:pt-5 lg:grid lg:grid-cols-2 lg:gap-12 lg:p-8 lg:pt-6">
+        <div>
+          {eyebrow && <p className="text-sm font-semibold tracking-wider uppercase">{eyebrow}</p>}
+          <h2 className="mt-1 text-6xl leading-[0.9] font-bold tracking-wide uppercase sm:text-7xl lg:text-8xl">
+            {title}
+          </h2>
+          <p className={cn("mt-3 text-sm", wideDetail && "lg:hidden")}>{detail}</p>
+          {wideDetail && <p className="mt-3 hidden text-sm lg:block">{wideDetail}</p>}
+          <Button
+            asChild
+            size="lg"
+            className="mt-5 h-16 w-full bg-foreground font-heading text-2xl font-bold tracking-wide text-background uppercase hover:bg-foreground/85"
+          >
+            <Link href={href}>
+              <Play className="size-5 fill-current" aria-hidden="true" />
+              Start workout
+            </Link>
+          </Button>
+          <div className="mt-2 flex flex-wrap justify-between gap-x-4">{links}</div>
+        </div>
+        {wideSide && <div className="hidden lg:block">{wideSide}</div>}
       </div>
     </section>
+  );
+}
+
+function SideList({ heading, rows }: { heading: string; rows: [string, string?][] }) {
+  return (
+    <>
+      <h3 className="font-heading text-2xl font-bold tracking-wide uppercase">{heading}</h3>
+      <ul className="mt-3">
+        {rows.map(([name, target]) => (
+          <li
+            key={name}
+            className="flex items-baseline justify-between gap-4 border-t border-primary-foreground/30 py-2.5"
+          >
+            <span className="font-medium">{name}</span>
+            {target && <span className="shrink-0 text-sm tabular-nums">{target}</span>}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -94,6 +123,17 @@ export function NextSessionCard() {
         detail={`Start an empty workout, or follow the ${PROGRAM_NAME}.`}
         href="/workouts/new"
         plates={PLATES_WITHOUT_PROGRAM}
+        wideSide={
+          <SideList
+            heading="The 6-week block"
+            rows={[
+              ["4 days a week"],
+              ["Squat, bench, deadlift, and a second bench day"],
+              ["Reps drop and effort climbs through week 5"],
+              ["Week 6 is a lighter deload"],
+            ]}
+          />
+        }
         links={programLink}
       />
     );
@@ -123,6 +163,16 @@ export function NextSessionCard() {
       eyebrow={`Up next · Week ${session.week}, Day ${session.day}${session.week === DELOAD_WEEK ? " · Deload" : ""}`}
       title={session.name}
       detail={`${session.exercises.map((exercise) => exercise.name).join(", ")}. ${logged} of ${WEEKS * DAYS} sessions logged.`}
+      wideDetail={`${logged} of ${WEEKS * DAYS} sessions logged.`}
+      wideSide={
+        <SideList
+          heading="Today's plan"
+          rows={session.exercises.map((exercise) => [
+            exercise.name,
+            `${exercise.sets} × ${exercise.reps} @ RPE ${exercise.rpe}`,
+          ])}
+        />
+      }
       href={`/workouts/new?week=${session.week}&day=${session.day}`}
       plates={plates}
       links={

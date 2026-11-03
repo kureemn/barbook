@@ -25,7 +25,7 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-6 border-b bg-card px-4 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-6 border-b bg-card px-4 sm:px-6 lg:px-8">
       <Link
         href={data?.user ? "/workouts" : "/"}
         className="flex min-h-11 items-center gap-2"

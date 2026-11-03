@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  bestSet,
   lastTopSet,
   suggestionsForTemplate,
   suggestWeight,
@@ -130,5 +131,40 @@ describe("suggestionsForTemplate", () => {
       TODAY
     );
     expect(suggestions.heavy.weight).toBeGreaterThan(suggestions.light.weight);
+  });
+});
+
+describe("bestSet", () => {
+  const id = set(1, 1, null).exercise_id;
+  const earlier = { performed_on: "2026-10-01" };
+
+  it("picks the highest estimate, even if a later set was heavier", () => {
+    // 145 x 8 at RPE 7 estimates about 198, while an unrated 170 x 1 counts as 170.
+    const best = set(145, 8, 7, earlier);
+    expect(bestSet([best, set(170, 1, null)], id, TODAY)).toEqual(best);
+  });
+
+  it("ignores other exercises and future dates, and has nothing with no history", () => {
+    expect(bestSet([set(500, 1, null, { exercise_id: "other" })], id, TODAY)).toBeNull();
+    expect(bestSet([set(500, 1, null, { performed_on: "2026-12-01" })], id, TODAY)).toBeNull();
+    expect(bestSet([], id, TODAY)).toBeNull();
+  });
+
+  it("is what a program's per-set targets use, instead of the last workout", () => {
+    const best = set(145, 8, 7, earlier);
+    const suggestions = suggestionsForTemplate(
+      [
+        {
+          id: "t",
+          exercise_id: id,
+          target_reps: 5,
+          target_rpe: null,
+          set_targets: [{ reps: 5, percent: 0.75 }],
+        },
+      ],
+      [best, set(170, 1, null)],
+      TODAY
+    );
+    expect(suggestions.t.basedOn).toEqual(best);
   });
 });

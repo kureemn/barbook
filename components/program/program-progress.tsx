@@ -1,7 +1,7 @@
-import { DAYS, WEEKS } from "@/lib/programs";
+import { totalSessions, type Program } from "@/lib/programs";
 
-export function ProgramProgress({ logged }: { logged: number }) {
-  const total = WEEKS * DAYS;
+export function ProgramProgress({ logged, program }: { logged: number; program: Program }) {
+  const total = totalSessions(program);
   return (
     <div className="mt-3">
       <p className="text-sm text-muted-foreground tabular-nums">

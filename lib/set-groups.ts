@@ -17,6 +17,10 @@ export function flattenGroups<Set>(groups: { exercise_id: string; sets: Set[] }[
 }
 
 /** One group per template exercise, with its target sets ready to fill in. */
+function roundToFive(weight: number) {
+  return Math.round(weight / 5) * 5;
+}
+
 export function setsFromTemplate(
   exercises: {
     id?: string;
@@ -24,12 +28,24 @@ export function setsFromTemplate(
     target_sets: number;
     target_reps: number;
     target_rpe: number | null;
+    set_targets?: { reps: number; percent: number }[];
   }[],
-  weightFor: (exercise: { id?: string }) => number | undefined = () => undefined
+  weightFor: (exercise: { id?: string }) => number | undefined = () => undefined,
+  trainingMaxFor: (exercise: { id?: string }) => number | undefined = () => undefined
 ) {
   return exercises.map((exercise) => ({
     exercise_id: exercise.exercise_id,
-    sets: Array.from({ length: exercise.target_sets }, () => ({
+    sets: exercise.set_targets
+      ? exercise.set_targets.map((target) => {
+          const trainingMax = trainingMaxFor(exercise);
+          return {
+            weight: trainingMax === undefined ? "" : String(roundToFive(trainingMax * target.percent)),
+            reps: String(target.reps),
+            rpe: "",
+            is_warmup: false,
+          };
+        })
+      : Array.from({ length: exercise.target_sets }, () => ({
       weight: String(weightFor(exercise) ?? ""),
       reps: String(exercise.target_reps),
       rpe: exercise.target_rpe === null ? "" : String(Number(exercise.target_rpe)),

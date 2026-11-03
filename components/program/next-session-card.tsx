@@ -6,7 +6,13 @@ import { ArrowRight, Play } from "lucide-react";
 import { BarbellArt } from "@/components/program/barbell-art";
 import { Button } from "@/components/ui/button";
 import { loadActiveRun, type ProgramRun } from "@/lib/program-runs";
-import { DAYS, DELOAD_WEEK, nextSession, PROGRAM_NAME, WEEKS } from "@/lib/programs";
+import {
+  getProgram,
+  nextSession,
+  PROGRAMS,
+  targetText,
+  totalSessions,
+} from "@/lib/programs";
 import { cn } from "@/lib/utils";
 
 const SURFACE = "overflow-hidden rounded-xl bg-primary text-primary-foreground";
@@ -120,18 +126,13 @@ export function NextSessionCard() {
       <Hero
         label="Start training"
         title="Ready to lift?"
-        detail={`Start an empty workout, or follow the ${PROGRAM_NAME}.`}
+        detail="Start an empty workout, or choose a program to follow."
         href="/workouts/new"
         plates={PLATES_WITHOUT_PROGRAM}
         wideSide={
           <SideList
-            heading="The 6-week block"
-            rows={[
-              ["4 days a week"],
-              ["Squat, bench, deadlift, and a second bench day"],
-              ["Reps drop and effort climbs through week 5"],
-              ["Week 6 is a lighter deload"],
-            ]}
+            heading="Choose a program"
+            rows={PROGRAMS.map((program) => [program.name, program.focus])}
           />
         }
         links={programLink}
@@ -139,20 +140,27 @@ export function NextSessionCard() {
     );
   }
 
+  const program = getProgram(run.program_key);
   const logged = run.program_sessions.length;
+  const total = totalSessions(program);
   // One plate goes on for each finished week, so the bar fills as the program does.
-  const plates = Math.floor(logged / DAYS);
-  const session = nextSession(run.program_sessions);
+  const plates = Math.floor(logged / program.days.length);
+  const session = nextSession(program, run.program_sessions);
 
   if (!session) {
     return (
       <Hero
         label="Start training"
         title="Program finished"
-        detail={`You've logged every session of the ${PROGRAM_NAME}. Nice work.`}
+        detail={`You've logged every session of ${program.name}. Nice work.`}
         href="/workouts/new"
         plates={plates}
-        links={programLink}
+        links={
+          <HeroLink href="/program">
+            Choose your next program
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </HeroLink>
+        }
       />
     );
   }
@@ -160,16 +168,16 @@ export function NextSessionCard() {
   return (
     <Hero
       label="Your next session"
-      eyebrow={`Up next · Week ${session.week}, Day ${session.day}${session.week === DELOAD_WEEK ? " · Deload" : ""}`}
+      eyebrow={`${program.name} · Week ${session.week}, Day ${session.day}${session.week === program.deloadWeek ? " · Deload" : ""}`}
       title={session.name}
-      detail={`${session.exercises.map((exercise) => exercise.name).join(", ")}. ${logged} of ${WEEKS * DAYS} sessions logged.`}
-      wideDetail={`${logged} of ${WEEKS * DAYS} sessions logged.`}
+      detail={`${session.exercises.map((exercise) => exercise.name).join(", ")}. ${logged} of ${total} sessions logged.`}
+      wideDetail={`${logged} of ${total} sessions logged.`}
       wideSide={
         <SideList
           heading="Today's plan"
           rows={session.exercises.map((exercise) => [
             exercise.name,
-            `${exercise.sets} × ${exercise.reps} @ RPE ${exercise.rpe}`,
+            targetText(exercise),
           ])}
         />
       }

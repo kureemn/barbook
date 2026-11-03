@@ -140,10 +140,14 @@ create table if not exists program_runs (
   ended_on     date,
   created_at   timestamptz not null default now(),
 
-  constraint program_runs_key_valid check (program_key in ('six-week-strength')),
   constraint program_runs_dates_valid check (ended_on is null or ended_on >= started_on),
   constraint program_runs_id_owner_unique unique (id, user_id)
 );
+
+-- Which programs exist. Kept apart from the table so adding one updates existing databases.
+alter table program_runs drop constraint if exists program_runs_key_valid;
+alter table program_runs add constraint program_runs_key_valid
+  check (program_key in ('six-week-strength', 'five-three-one-bbb', 'phul'));
 
 -- Only one program can be running at a time. Ended runs stay as history.
 create unique index if not exists program_runs_one_active_idx

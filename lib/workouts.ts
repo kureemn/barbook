@@ -73,12 +73,15 @@ export function formatDate(date: string) {
   });
 }
 
-/** Month and day for a date tile, without shifting across timezones. */
+/** The parts of a date a workout row shows, without shifting across timezones. */
 export function dateParts(date: string) {
   const [year, month, day] = date.split("-").map(Number);
+  const local = new Date(year, month - 1, day);
   return {
-    month: new Date(year, month - 1, day).toLocaleDateString(undefined, { month: "short" }),
+    month: local.toLocaleDateString(undefined, { month: "short" }),
+    weekday: local.toLocaleDateString(undefined, { weekday: "short" }),
     day,
+    year,
   };
 }
 

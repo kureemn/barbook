@@ -32,34 +32,34 @@
   --radius-2xl: calc(var(--radius) * 1.8);
 }
 
-/* Charcoal, chalk, and competition red, from PLAN.md section 6.
-   Button text on the red is charcoal: chalk on this red is only about 3.4:1,
-   below the 4.5:1 WCAG AA needs, while charcoal is about 4.5:1. */
+/* Chalk, charcoal, and competition red, from PLAN.md section 6, on a light page.
+   Text on the red is charcoal: chalk on this red is only about 3.4:1,
+   below the 4.5:1 WCAG AA needs, while charcoal is about 4.6:1. */
 :root {
-  --background: #16181c;
-  --foreground: #f2f0ea;
-  --card: #1f2227;
-  --card-foreground: #f2f0ea;
-  --popover: #1f2227;
-  --popover-foreground: #f2f0ea;
-  --primary: #e5484d;
+  --background: #f2f0ea;
+  --foreground: #16181c;
+  --card: #ffffff;
+  --card-foreground: #16181c;
+  --popover: #ffffff;
+  --popover-foreground: #16181c;
+  --primary: #f03e1f;
   --primary-foreground: #16181c;
-  --secondary: #2a2e34;
-  --secondary-foreground: #f2f0ea;
-  --muted: #2a2e34;
-  --muted-foreground: #b4b6ba;
-  --accent: #2a2e34;
-  --accent-foreground: #f2f0ea;
-  --destructive: #ff8a8d;
-  --border: #3a3f46;
-  --series-squat: #3987e5;
-  --series-bench: #d95926;
-  --series-deadlift: #199e70;
-  --muscle-main: #e5484d;
-  --muscle-also: #8c4246;
-  --muscle-rest: #4a4f57;
-  --input: #5b616a;
-  --ring: #f2f0ea;
+  --secondary: #e6e3da;
+  --secondary-foreground: #16181c;
+  --muted: #eae7de;
+  --muted-foreground: #55585e;
+  --accent: #eae7de;
+  --accent-foreground: #16181c;
+  --destructive: #b42318;
+  --border: #d8d5cb;
+  --series-squat: #2470c9;
+  --series-bench: #c2410c;
+  --series-deadlift: #0d7f57;
+  --muscle-main: #f03e1f;
+  --muscle-also: #f6a593;
+  --muscle-rest: #c9c6bb;
+  --input: #84878d;
+  --ring: #16181c;
   --radius: 0.625rem;
 }
 
@@ -69,7 +69,9 @@
   }
   html {
     @apply font-sans;
-    color-scheme: dark;
+    color-scheme: light;
+    /* Keeps a focused field from landing under the sticky top bar. */
+    scroll-padding-top: 5rem;
   }
   body {
     @apply bg-background text-foreground;
@@ -82,7 +84,7 @@
 }
 
 /* Leaves room above the phone's bottom tab bar on pages that have one. */
-@media (width < 40rem) {
+@media (width < 48rem) {
   main:has(nav[aria-label="Main"]) {
     padding-bottom: 6rem;
   }

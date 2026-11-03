@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
+import { defaultTitle, flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
 
 const set = (exercise_id: string, weight: number) => ({ exercise_id, weight });
 
@@ -84,5 +84,19 @@ describe("setsFromTemplate", () => {
       { exercise_id: "squat", target_sets: 1, target_reps: 5, target_rpe: null },
     ]);
     expect(groups.map((group) => group.exercise_id)).toEqual(["bench", "squat"]);
+  });
+});
+
+describe("defaultTitle", () => {
+  it("names a workout after its exercises, once each", () => {
+    expect(defaultTitle(["Squat", "Bench", "Squat"])).toBe("Squat, Bench");
+  });
+
+  it("stays short with many exercises", () => {
+    expect(defaultTitle(["Squat", "Bench", "Deadlift", "Dip", "Lunge"])).toBe("Squat, Bench, Deadlift +2");
+  });
+
+  it("falls back when no exercise is chosen yet", () => {
+    expect(defaultTitle([undefined, ""])).toBe("Workout");
   });
 });

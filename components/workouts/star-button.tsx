@@ -47,7 +47,7 @@ export function StarButton({
       onClick={toggle}
     >
       <Star
-        className={starred ? "size-6 fill-primary text-primary" : "size-6"}
+        className={starred ? "size-6 fill-primary text-primary" : "size-6 text-muted-foreground"}
         aria-hidden="true"
       />
     </Button>

@@ -19,6 +19,7 @@ import {
 import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { StarButton } from "@/components/workouts/star-button";
 import { useRequireAuth } from "@/lib/neon/use-auth-guard";
+import { isBodyweight } from "@/lib/exercise-info";
 import { groupByExercise } from "@/lib/set-groups";
 import { PAGE_CLASS } from "@/lib/utils";
 import { workoutVolume } from "@/lib/volume";
@@ -147,7 +148,10 @@ export default function WorkoutDetailPage() {
                     {setIndex + 1}
                   </span>
                   <span>
-                    {Number(set.weight)} lb × {set.reps}
+                    {Number(set.weight) === 0 && isBodyweight(set.exercises?.name)
+                      ? "Bodyweight"
+                      : `${Number(set.weight)} lb`}{" "}
+                    × {set.reps}
                   </span>
                   {set.rpe !== null && (
                     <span className="text-sm text-muted-foreground">RPE {Number(set.rpe)}</span>

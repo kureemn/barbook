@@ -136,6 +136,12 @@ export function workoutMuscles(names: (string | undefined)[]): Muscle[] {
   return [...new Set(names.flatMap((name) => exerciseInfo(name)?.main ?? []))];
 }
 
+/** Exercises done on bars need no added weight, though a lifter can still log some. */
+export function isBodyweight(name: string | undefined) {
+  const equipment = exerciseInfo(name)?.equipment ?? [];
+  return equipment.includes("pullUpBar") || equipment.includes("dipBars");
+}
+
 /** Null for an exercise the lifter added themselves, since we can't know what it trains. */
 export function exerciseInfo(name: string | undefined): ExerciseInfo | null {
   if (!name) return null;

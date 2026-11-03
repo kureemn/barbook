@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exerciseInfo, workoutMuscles } from "@/lib/exercise-info";
+import { exerciseInfo, isBodyweight, workoutMuscles } from "@/lib/exercise-info";
 import { STARTER_EXERCISES } from "@/lib/starter-exercises";
 
 describe("exerciseInfo", () => {
@@ -40,5 +40,15 @@ describe("workoutMuscles", () => {
 
   it("skips exercises it doesn't know", () => {
     expect(workoutMuscles(["Sled Push", undefined])).toEqual([]);
+  });
+});
+
+describe("isBodyweight", () => {
+  it.each(["Dip", "Pull-Up", "Hanging Leg Raise", "dip"])("is true for %s", (name) => {
+    expect(isBodyweight(name)).toBe(true);
+  });
+
+  it.each(["Bench", "Lunge", "Sled Push", undefined])("is false for %s", (name) => {
+    expect(isBodyweight(name)).toBe(false);
   });
 });

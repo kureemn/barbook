@@ -167,7 +167,7 @@ Access is opt-in. New tables get no automatic access, so each one needs its own 
 
 ## Did the agent build what I designed?
 
-Mostly, with these differences from PLAN.md section 3:
+Yes. All seven planned tables exist with the planned columns and connections, and the many-to-many links work as designed through `workout_sets` and `stars`. Here's what differs from PLAN.md section 3:
 
 | Planned | Built | Why |
 |---|---|---|
@@ -175,3 +175,10 @@ Mostly, with these differences from PLAN.md section 3:
 | IDs are text | `uuid` | Neon Auth's user id is a uuid, and the database can validate it |
 | `created_at` is a date | Date and time | Keeps the exact moment a row was created |
 | `template_exercises.target_sets` is any number | Limited to 1 to 20 | Starting a workout creates one row per target set, so this keeps the form usable |
+| No program tables | Added `program_runs` and `program_sessions` | I added programs after the plan. They record which program I'm on and which workout finished each session |
+| Programs not designed | Program details live in `lib/programs.ts`, not tables | The weeks and targets are the same for everyone, so only each lifter's progress needs storing |
+
+Two things the agent added that the plan didn't spell out:
+
+- **Ownership checks:** a set's workout and exercise must have the same owner as the set, using two-column foreign keys. The plan only listed `user_id` columns.
+- **Automatic privacy:** Row Level Security is on for every table, and new tables get no access until they're granted it. The plan named Row Level Security in section 5, but section 3 didn't show the rules.

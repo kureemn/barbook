@@ -14,7 +14,7 @@ I built Barbook because, since I stopped competing, I've lost the coaching apps 
 - **Programs:** choose a 4-day program, see what's next, and switch when you want. Each program says where it comes from.
 - **Templates:** save sessions you repeat and start a workout from them.
 - **Suggested weights:** programs and templates fill in a weight based on your logged sets, and you can change it.
-- **Exercise details:** see the muscles and equipment for each of the 34 starter exercises.
+- **Exercise details:** see the muscles and equipment for each of the 34 starter exercises, with a short form video that plays right in the workout.
 - **Find workouts:** search by exercise, muscle, or title, filter by exercise, and sort by date or volume. Star the ones worth coming back to.
 - **Dashboard:** estimated 1-rep max, recent records, weekly volume, sessions per week, sets per muscle, and strength relative to bodyweight.
 - **Light and dark mode:** use the switch in the top bar.

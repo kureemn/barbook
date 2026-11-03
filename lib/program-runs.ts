@@ -1,7 +1,7 @@
 "use client";
 
 import { client } from "@/lib/neon/client";
-import { PROGRAM_KEY, type ProgramSession, type SessionKey } from "@/lib/programs";
+import type { ProgramKey, ProgramSession, SessionKey } from "@/lib/programs";
 import type { Template } from "@/lib/templates";
 import type { Exercise } from "@/lib/workouts";
 
@@ -9,6 +9,7 @@ export type LoggedSession = SessionKey & { workout_id: string };
 
 export type ProgramRun = {
   id: string;
+  program_key: string;
   started_on: string;
   program_sessions: LoggedSession[];
 };
@@ -17,17 +18,17 @@ export type ProgramRun = {
 export async function loadActiveRun(): Promise<ProgramRun | null> {
   const { data, error } = await client
     .from("program_runs")
-    .select("id, started_on, program_sessions(week, day, workout_id)")
+    .select("id, program_key, started_on, program_sessions(week, day, workout_id)")
     .is("ended_on", null)
     .maybeSingle();
   if (error) throw error;
   return data as unknown as ProgramRun | null;
 }
 
-export async function startProgram(today: string) {
+export async function startProgram(key: ProgramKey, today: string) {
   const { error } = await client
     .from("program_runs")
-    .insert({ program_key: PROGRAM_KEY, started_on: today });
+    .insert({ program_key: key, started_on: today });
   if (error) throw error;
 }
 
@@ -63,6 +64,8 @@ export function sessionAsTemplate(session: ProgramSession, exercises: Exercise[]
           target_sets: target.sets,
           target_reps: target.reps,
           target_rpe: target.rpe,
+          set_targets: target.setTargets,
+          note: target.note,
           exercises: { name: exercise.name },
         },
       ];

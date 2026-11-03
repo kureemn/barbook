@@ -6,20 +6,21 @@ import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { WorkoutForm } from "@/components/workouts/workout-form";
 import { useRequireAuth } from "@/lib/neon/use-auth-guard";
 import { loadActiveRun, sessionAsTemplate } from "@/lib/program-runs";
-import { isSessionKey, programSession, type SessionKey } from "@/lib/programs";
+import { getProgram, isSessionKey, programSession, type SessionKey } from "@/lib/programs";
 import { suggestionsForTemplate, type Suggestion } from "@/lib/suggestions";
 import { loadTemplate, type Template } from "@/lib/templates";
 import { loadExercises, loadSetHistory, todayLocal } from "@/lib/workouts";
 
 /** Loads a program session as a template. Throws a message the lifter should see. */
 async function loadSession(key: SessionKey) {
-  if (!isSessionKey(key)) throw new Error("We couldn't find that program session.");
   const run = await loadActiveRun();
   if (!run) throw new Error("You aren't on a program right now.");
+  const program = getProgram(run.program_key);
+  if (!isSessionKey(program, key)) throw new Error("We couldn't find that program session.");
   if (run.program_sessions.some((item) => item.week === key.week && item.day === key.day)) {
     throw new Error("You've already logged that session. Delete its workout to log it again.");
   }
-  const session = programSession(key.week, key.day);
+  const session = programSession(program, key.week, key.day);
   return { template: sessionAsTemplate(session, await loadExercises()), runId: run.id };
 }
 

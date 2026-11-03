@@ -1,6 +1,7 @@
 "use client";
 
 import { client } from "@/lib/neon/client";
+import type { SetTarget } from "@/lib/programs";
 
 export type TemplateExercise = {
   id: string;
@@ -10,6 +11,9 @@ export type TemplateExercise = {
   target_reps: number;
   target_rpe: number | null;
   exercises: { name: string } | null;
+  /** Only program sessions have these, for weights that change within a session. */
+  set_targets?: SetTarget[];
+  note?: string;
 };
 
 export type Template = {

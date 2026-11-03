@@ -105,7 +105,7 @@ One row each time a lifter starts a program. The weeks, days, and targets live i
 |---|---|---|
 | `id` | uuid | Primary key |
 | `user_id` | uuid | Owner, links to users |
-| `program_key` | text | Which built-in program, currently only `six-week-strength` |
+| `program_key` | text | Which built-in program: `six-week-strength`, `five-three-one-bbb`, or `phul` |
 | `started_on` | date | Required |
 | `ended_on` | date | Empty while the program is running |
 | `created_at` | timestamp | |

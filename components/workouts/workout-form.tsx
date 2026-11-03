@@ -23,8 +23,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { AddExerciseDialog } from "@/components/workouts/add-exercise-dialog";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { RestAnnouncement, RestLength, SetRest, useRestTimer } from "@/components/workouts/rest-timer";
+import { estimatedOneRepMax } from "@/lib/dashboard";
 import { recordSession } from "@/lib/program-runs";
-import type { SessionKey } from "@/lib/programs";
+import { TRAINING_MAX_SHARE, type SessionKey } from "@/lib/programs";
 import {
   defaultTitle,
   flattenGroups,
@@ -66,7 +67,7 @@ type ExerciseGroup = {
   exercise_id: string;
   sets: SetRow[];
   suggestion?: Suggestion;
-  target?: { reps: number; rpe: number | null };
+  target?: { reps: number; rpe: number | null; note?: string; trainingMax?: number };
 };
 
 function blankSet(key: number): SetRow {
@@ -82,14 +83,25 @@ function startingGroups(
   let setKey = 0;
   if (template) {
     const targets = template.template_exercises;
-    return setsFromTemplate(targets, (exercise) =>
-      exercise.id ? suggestions[exercise.id]?.weight : undefined
+    const trainingMaxFor = (exercise: { id?: string }) => {
+      const last = exercise.id ? suggestions[exercise.id]?.basedOn : undefined;
+      return last && estimatedOneRepMax(last.weight, last.reps, last.rpe) * TRAINING_MAX_SHARE;
+    };
+    return setsFromTemplate(
+      targets,
+      (exercise) => (exercise.id ? suggestions[exercise.id]?.weight : undefined),
+      trainingMaxFor
     ).map((group, index) => ({
       key: index,
       exercise_id: group.exercise_id,
       sets: group.sets.map((set) => ({ ...set, key: setKey++, done: false })),
       suggestion: suggestions[targets[index].id],
-      target: { reps: targets[index].target_reps, rpe: targets[index].target_rpe },
+      target: {
+        reps: targets[index].target_reps,
+        rpe: targets[index].target_rpe,
+        note: targets[index].note,
+        trainingMax: targets[index].set_targets ? trainingMaxFor(targets[index]) : undefined,
+      },
     }));
   }
   if (!workout) return [{ key: 0, exercise_id: "", sets: [blankSet(0)] }];
@@ -491,7 +503,17 @@ export function WorkoutForm({
                     name={exercises.find((exercise) => exercise.id === group.exercise_id)?.name}
                   />
                 </div>
-                {group.suggestion && group.target && (
+                {group.target?.note && (
+                  <p className="mt-3 text-sm text-muted-foreground">{group.target.note}</p>
+                )}
+                {group.target?.trainingMax !== undefined && group.suggestion && (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Training max {Math.round(group.target.trainingMax)} lb, which is 90% of your
+                    best estimated max, from {Number(group.suggestion.basedOn.weight)} lb ×{" "}
+                    {group.suggestion.basedOn.reps} on {formatDate(group.suggestion.basedOn.performed_on)}.
+                  </p>
+                )}
+                {group.suggestion && group.target && group.target.trainingMax === undefined && (
                   <p className="mt-3 text-sm text-muted-foreground">
                     Suggested {group.suggestion.weight} lb for {group.target.reps} reps
                     {group.target.rpe !== null && ` at RPE ${Number(group.target.rpe)}`}. Based on{" "}
@@ -503,9 +525,11 @@ export function WorkoutForm({
                 )}
                 {!group.suggestion && group.target && (
                   <p className="mt-3 text-sm text-muted-foreground">
-                    Aim for {group.target.reps} reps
+                    {group.target.note
+                      ? "There's no history to work out a training max from yet, so choose your own weights."
+                      : <>Aim for {group.target.reps} reps
                     {group.target.rpe !== null && ` at RPE ${Number(group.target.rpe)}`}. There&apos;s no
-                    history to suggest a weight from yet, so choose your own.
+                    history to suggest a weight from yet, so choose your own.</>}
                   </p>
                 )}
 

@@ -66,6 +66,20 @@ export function suggestWeight(
   return suggested > 0 ? suggested : null;
 }
 
+/**
+ * The working set with the highest estimated 1-rep max. A program's training max uses
+ * this, so a routine heavy single logged without RPE can't shrink it.
+ */
+export function bestSet(sets: HistorySet[], exerciseId: string, today: string) {
+  const estimate = (set: HistorySet) => estimatedOneRepMax(set.weight, set.reps, set.rpe);
+  return sets
+    .filter((set) => set.exercise_id === exerciseId && set.performed_on <= today)
+    .reduce<HistorySet | null>(
+      (best, set) => (!best || estimate(set) > estimate(best) ? set : best),
+      null
+    );
+}
+
 /** Suggestions for a template's exercises, keyed by template exercise id. */
 export function suggestionsForTemplate(
   exercises: {
@@ -73,13 +87,16 @@ export function suggestionsForTemplate(
     exercise_id: string;
     target_reps: number;
     target_rpe: number | null;
+    set_targets?: unknown[];
   }[],
   history: HistorySet[],
   today: string
 ) {
   const suggestions: Record<string, Suggestion> = {};
   for (const exercise of exercises) {
-    const last = lastTopSet(history, exercise.exercise_id, today);
+    const last = exercise.set_targets
+      ? bestSet(history, exercise.exercise_id, today)
+      : lastTopSet(history, exercise.exercise_id, today);
     if (!last) continue;
     const weight = suggestWeight(last, exercise.target_reps, exercise.target_rpe);
     if (weight !== null) suggestions[exercise.id] = { weight, basedOn: last };

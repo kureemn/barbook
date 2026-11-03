@@ -144,6 +144,16 @@ try {
     (await countRows("select * from program_sessions where run_id = $1", [run.id])) === 1);
   await expectBlocked("a second running program is rejected",
     "insert into program_runs (program_key, started_on) values ('six-week-strength', '2026-11-02')", [], "23505");
+  for (const key of ["five-three-one-bbb", "phul"]) {
+    await client.query("savepoint program");
+    await client.query("delete from program_sessions where run_id = $1", [run.id]);
+    await client.query("update program_runs set ended_on = started_on where id = $1", [run.id]);
+    const accepted = await countRows(
+      "insert into program_runs (program_key, started_on) values ($1, '2026-11-02') returning id", [key]
+    );
+    report(`${key} can be started`, accepted === 1);
+    await client.query("rollback to savepoint program");
+  }
   await expectBlocked("an unknown program is rejected",
     "insert into program_runs (program_key, started_on, ended_on) values ('nope', '2026-11-02', '2026-11-02')", [], "23514");
   await expectBlocked("week 7 is rejected",

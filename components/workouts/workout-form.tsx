@@ -47,6 +47,7 @@ import {
   type Exercise,
   type Workout,
 } from "@/lib/workouts";
+import { isBodyweight } from "@/lib/exercise-info";
 import { validateWorkout } from "@/lib/validation";
 import { clearDraft, draftKey, readDraft, writeDraft } from "@/lib/workout-draft";
 
@@ -184,6 +185,10 @@ export function WorkoutForm({
   // Nothing is worth saving until the lifter changes something.
   const untouched = useRef(JSON.stringify({ title, performedOn, bodyweight, notes, groups }));
 
+  function nameOf(exerciseId: string) {
+    return exercises?.find((exercise) => exercise.id === exerciseId)?.name;
+  }
+
   function validate(list: ExerciseGroup[]) {
     const names = list.map(
       (group) => exercises?.find((exercise) => exercise.id === group.exercise_id)?.name
@@ -196,7 +201,8 @@ export function WorkoutForm({
       sets: flattenGroups(list).map(({ id, exercise_id, weight, reps, rpe, is_warmup }) => ({
         id,
         exercise_id,
-        weight,
+        // A blank weight on a bodyweight exercise means no added weight.
+        weight: weight.trim() === "" && isBodyweight(nameOf(exercise_id)) ? "0" : weight,
         reps,
         rpe,
         is_warmup,
@@ -459,6 +465,7 @@ export function WorkoutForm({
               .slice(0, groupIndex)
               .reduce((total, earlier) => total + earlier.sets.length, 0);
             const exerciseError = errors[`sets.${firstSet}.exercise_id`];
+            const bodyweightExercise = isBodyweight(nameOf(group.exercise_id));
             return (
               <fieldset key={group.key} className="rounded-lg border bg-card p-3">
                 <legend className="sr-only">Exercise {groupIndex + 1}</legend>
@@ -525,7 +532,9 @@ export function WorkoutForm({
                 )}
                 {!group.suggestion && group.target && (
                   <p className="mt-3 text-sm text-muted-foreground">
-                    {group.target.note
+                    {bodyweightExercise
+                      ? `Aim for ${group.target.reps} reps${group.target.rpe !== null ? ` at RPE ${Number(group.target.rpe)}` : ""}. Leave the weight blank for bodyweight.`
+                      : group.target.note
                       ? "There's no history to work out a training max from yet, so choose your own weights."
                       : <>Aim for {group.target.reps} reps
                     {group.target.rpe !== null && ` at RPE ${Number(group.target.rpe)}`}. There&apos;s no
@@ -570,8 +579,9 @@ export function WorkoutForm({
                                 min="0"
                                 step="any"
                                 required
+                                placeholder={bodyweightExercise ? "BW" : undefined}
                                 {...errorProps(`weight-error-${set.key}`, errors[`${path}.weight`])}
-                                value={set.weight}
+                                value={bodyweightExercise && Number(set.weight) === 0 ? "" : set.weight}
                                 onChange={(e) =>
                                   changeSet(group.key, set.key, { weight: e.target.value })
                                 }

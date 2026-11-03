@@ -20,6 +20,7 @@ import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { StarButton } from "@/components/workouts/star-button";
 import { useRequireAuth } from "@/lib/neon/use-auth-guard";
 import { groupByExercise } from "@/lib/set-groups";
+import { PAGE_CLASS } from "@/lib/utils";
 import { workoutVolume } from "@/lib/volume";
 import {
   deleteWorkout,
@@ -65,7 +66,7 @@ export default function WorkoutDetailPage() {
   if (status !== "authed" || !workout) return <PageLoading />;
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
+    <main className={PAGE_CLASS}>
       <Link
         href="/workouts"
         className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground underline-offset-4 hover:underline"
@@ -84,9 +85,8 @@ export default function WorkoutDetailPage() {
       </div>
       <p className="mt-1 text-muted-foreground">
         {formatDate(workout.performed_on)}
-        {workout.bodyweight !== null && ` · ${workout.bodyweight} lb bodyweight`}
       </p>
-      <dl className="mt-4 grid grid-cols-2 gap-3">
+      <dl className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div className="rounded-lg border bg-card p-3">
           <dt className="text-sm text-muted-foreground">Working volume</dt>
           <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
@@ -99,6 +99,20 @@ export default function WorkoutDetailPage() {
             {workout.workout_sets.filter((set) => !set.is_warmup).length}
           </dd>
         </div>
+        <div className="rounded-lg border bg-card p-3">
+          <dt className="text-sm text-muted-foreground">Exercises</dt>
+          <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
+            {groupByExercise(workout.workout_sets).length}
+          </dd>
+        </div>
+        {workout.bodyweight !== null && (
+          <div className="rounded-lg border bg-card p-3">
+            <dt className="text-sm text-muted-foreground">Bodyweight</dt>
+            <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
+              {Number(workout.bodyweight)} lb
+            </dd>
+          </div>
+        )}
       </dl>
 
       <div className="mt-4 flex flex-wrap gap-3">
@@ -114,7 +128,7 @@ export default function WorkoutDetailPage() {
         </Button>
       </div>
 
-      <div className="mt-6 flex flex-col gap-4">
+      <div className="mt-6 grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {groupByExercise(workout.workout_sets).map((group) => (
           <section key={group.sets[0].id} className="rounded-lg border bg-card p-4">
             <h2 className="text-2xl font-semibold tracking-wide uppercase">

@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Star } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { HomeStats } from "@/components/dashboard/home-stats";
 import { NextSessionCard } from "@/components/program/next-session-card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import {
 } from "@/lib/find-workouts";
 import { MUSCLE_NAMES, workoutMuscles } from "@/lib/exercise-info";
 import { exerciseNames } from "@/lib/set-groups";
-import { cn, selectClass } from "@/lib/utils";
+import { PAGE_CLASS, selectClass } from "@/lib/utils";
 import { workoutVolume } from "@/lib/volume";
 import { dateParts, formatDate, loadExercises, loadWorkouts, type Exercise, type Workout } from "@/lib/workouts";
 
@@ -79,12 +80,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
   const thisYear = new Date().getFullYear();
 
   return (
-    <main
-      className={cn(
-        "mx-auto w-full flex-1 px-4 py-8",
-        starredOnly ? "max-w-2xl" : "max-w-[100rem] lg:px-8"
-      )}
-    >
+    <main className={PAGE_CLASS}>
       {/* The hero leads this page, so its title only needs to reach screen readers. */}
       <h1 className={starredOnly ? "text-4xl font-bold tracking-wide uppercase" : "sr-only"}>
         {starredOnly ? "Starred workouts" : "Workouts"}
@@ -102,24 +98,28 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
 
         <section aria-label={starredOnly ? "Starred workouts" : "Workout history"} className={starredOnly ? "mt-6" : "mt-8"}>
           {workouts.length === 0 ? (
-            <p className="text-muted-foreground">
-              {starredOnly
-                ? "No starred workouts yet. Tap the star on a workout to save it here."
-                : "No workouts yet. Hit Start workout to log your first."}
-            </p>
+            starredOnly ? (
+              <EmptyState
+                icon={Star}
+                title="Nothing starred yet"
+                action={
+                  <Button asChild>
+                    <Link href="/workouts">See your history</Link>
+                  </Button>
+                }
+              >
+                Tap the star on a workout worth coming back to, like a big PR day or a session you
+                want to repeat. It&apos;ll show up here.
+              </EmptyState>
+            ) : (
+              <p className="text-muted-foreground">
+                No workouts yet. Hit Start workout to log your first.
+              </p>
+            )
           ) : (
             <>
-              <div
-                className={cn(
-                  !starredOnly && "lg:flex lg:items-start lg:justify-between lg:gap-8"
-                )}
-              >
-              <div
-                className={cn(
-                  "flex items-baseline justify-between gap-4",
-                  !starredOnly && "lg:justify-start"
-                )}
-              >
+              <div className="lg:flex lg:items-start lg:justify-between lg:gap-8">
+              <div className="flex items-baseline justify-between gap-4 lg:justify-start">
                 {!starredOnly && (
                   <h2 className="text-3xl font-bold tracking-wide uppercase">History</h2>
                 )}
@@ -133,7 +133,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
               <div
                 role="search"
                 aria-label="Find workouts"
-                className={cn("mt-3", !starredOnly && "lg:mt-0 lg:w-[28rem]")}
+                className="mt-3 lg:mt-0 lg:w-[28rem]"
               >
                 <div className="flex gap-2">
                   <div className="relative min-w-0 flex-1">
@@ -224,7 +224,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
                 </p>
               )}
 
-              <ul className={cn("mt-3", !starredOnly && "lg:grid lg:grid-cols-2 lg:gap-x-10")}>
+              <ul className="mt-3 lg:grid lg:grid-cols-2 lg:gap-x-10">
                 {results.map((workout) => {
                   const workingSets = workout.workout_sets.filter((set) => !set.is_warmup).length;
                   const date = dateParts(workout.performed_on);

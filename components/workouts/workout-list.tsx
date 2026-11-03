@@ -98,7 +98,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
           </div>
         )}
 
-        <section aria-label={starredOnly ? "Starred workouts" : "Workout history"} className="mt-8 lg:mt-0">
+        <section aria-label={starredOnly ? "Starred workouts" : "Workout history"} className={starredOnly ? "mt-6" : "mt-8 lg:mt-0"}>
           {workouts.length === 0 ? (
             <p className="text-muted-foreground">
               {starredOnly

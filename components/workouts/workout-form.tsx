@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import { ExerciseDetails } from "@/components/exercises/exercise-details";
 import { errorProps, FieldError, focusFirstError } from "@/components/field-error";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -316,6 +317,11 @@ export function WorkoutForm({
                     <option value={NEW_EXERCISE}>+ Add new exercise</option>
                   </select>
                   <FieldError id={`exercise-error-${group.key}`} message={exerciseError} />
+                </div>
+                <div className="mt-3 empty:hidden">
+                  <ExerciseDetails
+                    name={exercises.find((exercise) => exercise.id === group.exercise_id)?.name}
+                  />
                 </div>
                 {group.suggestion && group.target && (
                   <p className="mt-3 text-sm text-muted-foreground">

@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { VIEWS, viewFor } from "@/components/workouts/workout-nav";
 import { cn } from "@/lib/utils";
+import { clearAllDrafts } from "@/lib/workout-draft";
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,6 +19,7 @@ export function SiteHeader() {
 
   async function handleSignOut() {
     await client.auth.signOut();
+    clearAllDrafts();
     toast.success("Logged out.");
     router.replace("/");
   }

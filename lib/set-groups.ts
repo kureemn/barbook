@@ -50,3 +50,15 @@ export function defaultTitle(names: (string | undefined)[]) {
   if (unique.length <= 3) return unique.join(", ");
   return `${unique.slice(0, 3).join(", ")} +${unique.length - 3}`;
 }
+
+/** Keeps only sets the lifter checked off, and drops any exercise left with none. */
+export function keepDoneSets<Group extends { sets: { done: boolean }[] }>(groups: Group[]) {
+  return groups
+    .map((group) => ({ ...group, sets: group.sets.filter((set) => set.done) }))
+    .filter((group) => group.sets.length > 0);
+}
+
+export function setCounts(groups: { sets: { done: boolean }[] }[]) {
+  const sets = groups.flatMap((group) => group.sets);
+  return { done: sets.filter((set) => set.done).length, total: sets.length };
+}

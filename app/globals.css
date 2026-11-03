@@ -99,8 +99,9 @@
     &.dark {
       color-scheme: dark;
     }
-    /* Keeps a focused field from landing under the sticky top bar. */
+    /* Keeps a focused field from landing under the sticky top bar or pinned Finish bar. */
     scroll-padding-top: 5rem;
+    scroll-padding-bottom: 6rem;
   }
   body {
     @apply bg-background text-foreground;

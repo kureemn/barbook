@@ -75,7 +75,7 @@ export default function WorkoutDetailPage() {
       </Link>
 
       <div className="mt-2 flex items-start justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{workout.title}</h1>
+        <h1 className="text-4xl font-bold tracking-wide uppercase">{workout.title}</h1>
         <StarButton
           workoutId={workout.id}
           title={workout.title}
@@ -86,9 +86,20 @@ export default function WorkoutDetailPage() {
         {formatDate(workout.performed_on)}
         {workout.bodyweight !== null && ` · ${workout.bodyweight} lb bodyweight`}
       </p>
-      <p className="mt-1 text-muted-foreground">
-        {workoutVolume(workout.workout_sets).toLocaleString()} lb working volume
-      </p>
+      <dl className="mt-4 grid grid-cols-2 gap-3">
+        <div className="rounded-lg border bg-card p-3">
+          <dt className="text-sm text-muted-foreground">Working volume</dt>
+          <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
+            {workoutVolume(workout.workout_sets).toLocaleString()} lb
+          </dd>
+        </div>
+        <div className="rounded-lg border bg-card p-3">
+          <dt className="text-sm text-muted-foreground">Working sets</dt>
+          <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
+            {workout.workout_sets.filter((set) => !set.is_warmup).length}
+          </dd>
+        </div>
+      </dl>
 
       <div className="mt-4 flex flex-wrap gap-3">
         <Button asChild variant="outline">
@@ -106,13 +117,21 @@ export default function WorkoutDetailPage() {
       <div className="mt-6 flex flex-col gap-4">
         {groupByExercise(workout.workout_sets).map((group) => (
           <section key={group.sets[0].id} className="rounded-lg border bg-card p-4">
-            <h2 className="font-semibold">{group.sets[0].exercises?.name ?? "Exercise"}</h2>
+            <h2 className="text-2xl font-semibold tracking-wide uppercase">
+              {group.sets[0].exercises?.name ?? "Exercise"}
+            </h2>
             <div className="mt-3 empty:hidden">
               <ExerciseDetails name={group.sets[0].exercises?.name} />
             </div>
-            <ul className="mt-3 flex flex-col gap-1">
-              {group.sets.map((set) => (
-                <li key={set.id} className="flex flex-wrap items-baseline gap-x-2 text-lg tabular-nums">
+            <ol className="mt-3 flex flex-col gap-2">
+              {group.sets.map((set, setIndex) => (
+                <li key={set.id} className="flex flex-wrap items-center gap-x-3 text-lg tabular-nums">
+                  <span
+                    aria-hidden="true"
+                    className="flex size-7 items-center justify-center rounded-full bg-secondary text-sm font-semibold"
+                  >
+                    {setIndex + 1}
+                  </span>
                   <span>
                     {Number(set.weight)} lb × {set.reps}
                   </span>
@@ -122,14 +141,14 @@ export default function WorkoutDetailPage() {
                   {set.is_warmup && <span className="text-sm text-muted-foreground">Warm-up</span>}
                 </li>
               ))}
-            </ul>
+            </ol>
           </section>
         ))}
       </div>
 
       {workout.notes && (
         <section className="mt-6">
-          <h2 className="font-semibold">Notes</h2>
+          <h2 className="text-2xl font-semibold tracking-wide uppercase">Notes</h2>
           <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{workout.notes}</p>
         </section>
       )}

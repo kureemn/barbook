@@ -19,9 +19,10 @@ import {
   type Sort,
   type WorkoutFilters,
 } from "@/lib/find-workouts";
+import { MUSCLE_NAMES, workoutMuscles } from "@/lib/exercise-info";
 import { selectClass } from "@/lib/utils";
 import { workoutVolume } from "@/lib/volume";
-import { formatDate, loadExercises, loadWorkouts, type Exercise, type Workout } from "@/lib/workouts";
+import { dateParts, formatDate, loadExercises, loadWorkouts, type Exercise, type Workout } from "@/lib/workouts";
 
 // Reading the link's filters needs a Suspense boundary for Next.js to build the page.
 export function WorkoutList({ starredOnly = false }: { starredOnly?: boolean }) {
@@ -70,7 +71,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-4xl font-bold tracking-wide uppercase">
           {starredOnly ? "Starred workouts" : "Workouts"}
         </h1>
       </div>
@@ -155,19 +156,39 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
         <ul className="mt-2 flex flex-col gap-3">
           {results.map((workout) => {
             const workingSets = workout.workout_sets.filter((set) => !set.is_warmup).length;
+            const date = dateParts(workout.performed_on);
+            const muscles = workoutMuscles(workout.workout_sets.map((set) => set.exercises?.name));
             return (
               <li key={workout.id} className="relative">
                 <Link
                   href={`/workouts/${workout.id}`}
-                  className="block rounded-lg border bg-card p-4 pr-14 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  className="flex gap-4 rounded-lg border bg-card p-4 pr-14 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
-                  <span className="block font-medium">{workout.title}</span>
-                  <span className="mt-1 block text-sm text-muted-foreground">
-                    {formatDate(workout.performed_on)}
+                  <span
+                    aria-hidden="true"
+                    className="flex size-14 shrink-0 flex-col items-center justify-center rounded-md bg-secondary"
+                  >
+                    <span className="text-xs text-muted-foreground uppercase">{date.month}</span>
+                    <span className="font-heading text-2xl leading-none font-bold">{date.day}</span>
                   </span>
-                  <span className="mt-1 block text-sm text-muted-foreground">
-                    {workingSets} working {workingSets === 1 ? "set" : "sets"} ·{" "}
-                    {workoutVolume(workout.workout_sets).toLocaleString()} lb
+                  <span className="min-w-0">
+                    <span className="block font-medium">{workout.title}</span>
+                    <span className="mt-1 block text-sm text-muted-foreground">
+                      {formatDate(workout.performed_on)}
+                    </span>
+                    <span className="mt-1 block text-sm text-muted-foreground">
+                      {workingSets} working {workingSets === 1 ? "set" : "sets"} ·{" "}
+                      {workoutVolume(workout.workout_sets).toLocaleString()} lb
+                    </span>
+                    {muscles.length > 0 && (
+                      <span className="mt-2 flex flex-wrap gap-1">
+                        {muscles.map((muscle) => (
+                          <span key={muscle} className="rounded-full bg-secondary px-2 py-0.5 text-xs">
+                            {MUSCLE_NAMES[muscle]}
+                          </span>
+                        ))}
+                      </span>
+                    )}
                   </span>
                 </Link>
                 <div className="absolute top-2 right-2">

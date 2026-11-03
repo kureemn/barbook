@@ -166,8 +166,8 @@ export function SetRest({
 }) {
   if (timer.activeSet === setKey) {
     return (
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-2xl font-semibold tabular-nums">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xl font-semibold tabular-nums">
           <span className="sr-only">Rest time left: </span>
           {formatTime(timer.timeLeft)}
         </p>
@@ -175,13 +175,14 @@ export function SetRest({
           <Button
             type="button"
             variant="outline"
+            className="px-2.5"
             aria-label="Add 30 seconds"
             onClick={timer.addThirtySeconds}
           >
             <Plus className="size-4" aria-hidden="true" />
             30s
           </Button>
-          <Button type="button" variant="outline" onClick={timer.stop}>
+          <Button type="button" variant="outline" className="px-2.5" onClick={timer.stop}>
             <Square className="size-4" aria-hidden="true" />
             Stop
           </Button>
@@ -201,7 +202,7 @@ export function SetRest({
         <Button
           type="button"
           variant="outline"
-          className="flex-1"
+          className="min-w-0 flex-1 px-2"
           aria-label={`Start ${formatTime(timer.restSeconds)} rest after set ${setNumber}`}
           onClick={() => timer.start(setKey)}
         >
@@ -210,7 +211,7 @@ export function SetRest({
         </Button>
         <select
           aria-label={`Rest length for set ${setNumber}`}
-          className={cn(selectClass, "w-24 tabular-nums")}
+          className={cn(selectClass, "w-20 shrink-0 tabular-nums")}
           value={timer.restSeconds}
           onChange={(e) => timer.chooseRest(Number(e.target.value))}
         >

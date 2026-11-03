@@ -131,6 +131,11 @@ const INFO: Record<string, ExerciseInfo> = {
   "tricep pushdown": { main: ["triceps"], also: [], equipment: ["cable"] },
 };
 
+/** The main muscles across a workout's exercises, in the order they were trained. */
+export function workoutMuscles(names: (string | undefined)[]): Muscle[] {
+  return [...new Set(names.flatMap((name) => exerciseInfo(name)?.main ?? []))];
+}
+
 /** Null for an exercise the lifter added themselves, since we can't know what it trains. */
 export function exerciseInfo(name: string | undefined): ExerciseInfo | null {
   if (!name) return null;

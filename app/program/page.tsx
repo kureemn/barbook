@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
+import { ProgramProgress } from "@/components/program/program-progress";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -81,16 +82,15 @@ export default function ProgramPage() {
 
   const next = run ? nextSession(run.program_sessions) : null;
   const logged = run?.program_sessions.length ?? 0;
-  const total = WEEKS * DAYS;
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight">{PROGRAM_NAME}</h1>
+      <h1 className="text-4xl font-bold tracking-wide uppercase">{PROGRAM_NAME}</h1>
       <WorkoutNav current="/program" />
 
       {run ? (
         <p className="mt-6 text-muted-foreground">
-          Started {formatDate(run.started_on)}. {logged} of {total} sessions logged.
+          Started {formatDate(run.started_on)}.
         </p>
       ) : (
         <div className="mt-6 flex flex-col gap-4">
@@ -110,8 +110,10 @@ export default function ProgramPage() {
         </div>
       )}
 
+      {run && <ProgramProgress logged={logged} />}
+
       {run && next && (
-        <Button asChild size="lg" className="mt-4">
+        <Button asChild size="lg" className="mt-4 w-full sm:w-auto">
           <Link href={`/workouts/new?week=${next.week}&day=${next.day}`}>
             <Play className="size-4" aria-hidden="true" />
             Start Week {next.week}, Day {next.day}: {next.name}
@@ -125,7 +127,7 @@ export default function ProgramPage() {
           return (
             <li key={week} className="rounded-lg border bg-card p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                <h2 className="font-semibold">
+                <h2 className="text-xl font-semibold tracking-wide uppercase">
                   Week {week}
                   {week === DELOAD_WEEK && " (deload)"}
                 </h2>

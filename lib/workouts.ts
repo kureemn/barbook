@@ -73,6 +73,15 @@ export function formatDate(date: string) {
   });
 }
 
+/** Month and day for a date tile, without shifting across timezones. */
+export function dateParts(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  return {
+    month: new Date(year, month - 1, day).toLocaleDateString(undefined, { month: "short" }),
+    day,
+  };
+}
+
 /** Competition order first: squat, bench, deadlift, then accessories by name. */
 function sortExercises(exercises: Exercise[]) {
   return [...exercises].sort(
@@ -118,7 +127,7 @@ export async function loadWorkouts({ starredOnly = false } = {}): Promise<Workou
   const stars = starredOnly ? "stars!inner(workout_id)" : "stars(workout_id)";
   const { data, error } = await client
     .from("workouts")
-    .select(`id, title, performed_on, bodyweight, notes, workout_sets(id, exercise_id, weight, reps, is_warmup), ${stars}`)
+    .select(`id, title, performed_on, bodyweight, notes, workout_sets(id, exercise_id, weight, reps, is_warmup, exercises(name)), ${stars}`)
     .order("performed_on", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) throw error;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exerciseInfo } from "@/lib/exercise-info";
+import { exerciseInfo, workoutMuscles } from "@/lib/exercise-info";
 import { STARTER_EXERCISES } from "@/lib/starter-exercises";
 
 describe("exerciseInfo", () => {
@@ -26,5 +26,19 @@ describe("exerciseInfo", () => {
     expect(exerciseInfo("Sled Push")).toBeNull();
     expect(exerciseInfo("")).toBeNull();
     expect(exerciseInfo(undefined)).toBeNull();
+  });
+});
+
+describe("workoutMuscles", () => {
+  it("lists each main muscle once, in the order trained", () => {
+    expect(workoutMuscles(["Bench", "Incline Bench", "Tricep Pushdown"])).toEqual([
+      "chest",
+      "shoulders",
+      "triceps",
+    ]);
+  });
+
+  it("skips exercises it doesn't know", () => {
+    expect(workoutMuscles(["Sled Push", undefined])).toEqual([]);
   });
 });

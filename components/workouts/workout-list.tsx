@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { NextSessionCard } from "@/components/program/next-session-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,21 +73,17 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
         <h1 className="text-2xl font-semibold tracking-tight">
           {starredOnly ? "Starred workouts" : "Workouts"}
         </h1>
-        <Button asChild>
-          <Link href="/workouts/new">
-            <Plus className="size-4" aria-hidden="true" />
-            Add workout
-          </Link>
-        </Button>
       </div>
 
       <WorkoutNav current={starredOnly ? "/workouts/starred" : "/workouts"} />
+
+      {!starredOnly && <NextSessionCard />}
 
       {workouts.length === 0 ? (
         <p className="mt-6 text-muted-foreground">
           {starredOnly
             ? "No starred workouts yet. Tap the star on a workout to save it here."
-            : "No workouts yet. Add your first session."}
+            : "No workouts yet. Start your first one above."}
         </p>
       ) : (
         <>

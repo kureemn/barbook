@@ -131,8 +131,48 @@ try {
     "insert into template_exercises (template_id, exercise_id, position, target_sets, target_reps) values ($1, $2, 2, 0, 5)",
     [template.id, exercise.id], "23514");
 
+  const run = (
+    await client.query(
+      "insert into program_runs (program_key, started_on) values ('six-week-strength', '2026-11-02') returning id"
+    )
+  ).rows[0];
+  await client.query(
+    "insert into program_sessions (run_id, week, day, workout_id) values ($1, 1, 1, $2)",
+    [run.id, workout.id]
+  );
+  report("User A can log a program session",
+    (await countRows("select * from program_sessions where run_id = $1", [run.id])) === 1);
+  await expectBlocked("a second running program is rejected",
+    "insert into program_runs (program_key, started_on) values ('six-week-strength', '2026-11-02')", [], "23505");
+  await expectBlocked("an unknown program is rejected",
+    "insert into program_runs (program_key, started_on, ended_on) values ('nope', '2026-11-02', '2026-11-02')", [], "23514");
+  await expectBlocked("week 7 is rejected",
+    "insert into program_sessions (run_id, week, day, workout_id) values ($1, 7, 1, $2)", [run.id, workout.id], "23514");
+  await expectBlocked("logging a session twice is rejected",
+    "insert into program_sessions (run_id, week, day, workout_id) values ($1, 1, 1, $2)", [run.id, workout.id], "23505");
+
+  const unloggedWorkout = (
+    await client.query("insert into workouts (title, performed_on) values ('Day 2', '2026-11-03') returning id")
+  ).rows[0];
+
   await actAs("authenticated", USER_B);
-  for (const table of ["workouts", "exercises", "workout_sets", "stars", "templates", "template_exercises"]) {
+  const otherWorkout = (
+    await client.query("insert into workouts (title, performed_on) values ('B day', '2026-11-02') returning id")
+  ).rows[0];
+  const otherRun = (
+    await client.query(
+      "insert into program_runs (program_key, started_on) values ('six-week-strength', '2026-11-02') returning id"
+    )
+  ).rows[0];
+  await expectBlocked("User B can't log a session on User A's program",
+    "insert into program_sessions (run_id, week, day, workout_id) values ($1, 1, 2, $2)", [run.id, otherWorkout.id], "23503");
+  await expectBlocked("User B can't use User A's workout for a session",
+    "insert into program_sessions (run_id, week, day, workout_id) values ($1, 1, 2, $2)", [otherRun.id, unloggedWorkout.id], "23503");
+  report("User B has their own running program alongside User A's",
+    (await countRows("select * from program_runs where id = $1", [otherRun.id])) === 1);
+  await client.query("delete from program_runs where id = $1", [otherRun.id]);
+  await client.query("delete from workouts where id = $1", [otherWorkout.id]);
+  for (const table of ["workouts", "exercises", "workout_sets", "stars", "templates", "template_exercises", "program_runs", "program_sessions"]) {
     report(`User B sees none of User A's ${table}`, (await countRows(`select * from ${table}`)) === 0);
   }
   report("User B can't open User A's workout by id",
@@ -203,6 +243,8 @@ try {
     (await countRows("select * from workout_sets where workout_id = $1", [workout.id])) === 0);
   report("deleting a workout deletes its stars",
     (await countRows("select * from stars where workout_id = $1", [workout.id])) === 0);
+  report("deleting a workout reopens its program session",
+    (await countRows("select * from program_sessions where run_id = $1", [run.id])) === 0);
 } finally {
   await client.query("rollback").catch(() => {});
   await client.end();

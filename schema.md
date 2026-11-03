@@ -97,6 +97,32 @@ One row per exercise in a template, with its targets.
 | `target_reps` | number | Above 0 |
 | `target_rpe` | number | Optional, 6 to 10 |
 
+### program_runs
+
+One row each time a lifter starts a program. The weeks, days, and targets live in `lib/programs.ts`, because they're the same for everyone. Only one run per user can be active.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | Owner, links to users |
+| `program_key` | text | Which built-in program, currently only `six-week-strength` |
+| `started_on` | date | Required |
+| `ended_on` | date | Empty while the program is running |
+| `created_at` | timestamp | |
+
+### program_sessions
+
+One row per finished session, connecting a run to the workout logged for it.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | Owner, links to users |
+| `run_id` | uuid | Links to program_runs |
+| `week` | number | 1 to 6 |
+| `day` | number | 1 to 4 |
+| `workout_id` | uuid | Links to workouts, and each workout can finish only one session |
+
 ## How they relate
 
 - A user has many exercises, workouts, and templates (one-to-many).
@@ -106,6 +132,8 @@ One row per exercise in a template, with its targets.
 - A template has many template exercises, and a workout can optionally come from one template.
 - Deleting a template deletes its template exercises. Workouts started from it stay, with `template_id` cleared. An exercise used in a template can't be deleted.
 - A set's workout and exercise must have the same owner as the set, and the same applies to template exercises and a workout's template.
+- A program run has many program sessions, and a run can log each week and day only once. Deleting a workout deletes its session row, which reopens that session. Ending a run keeps it and its workouts as history.
+- A session's run and workout must have the same owner as the session.
 
 ```mermaid
 erDiagram
@@ -119,6 +147,9 @@ erDiagram
     templates ||--o{ template_exercises : lists
     exercises ||--o{ template_exercises : "planned in"
     templates |o--o{ workouts : starts
+    users ||--o{ program_runs : starts
+    program_runs ||--o{ program_sessions : tracks
+    workouts ||--o| program_sessions : finishes
 ```
 
 ## Who can see what

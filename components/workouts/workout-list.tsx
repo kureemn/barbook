@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
+import { HomeStats } from "@/components/dashboard/home-stats";
 import { NextSessionCard } from "@/components/program/next-session-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,7 +79,12 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
   const thisYear = new Date().getFullYear();
 
   return (
-    <main className={cn("mx-auto w-full flex-1 px-4 py-8", starredOnly ? "max-w-2xl" : "max-w-5xl")}>
+    <main
+      className={cn(
+        "mx-auto w-full flex-1 px-4 py-8",
+        starredOnly ? "max-w-2xl" : "max-w-[100rem] lg:px-8"
+      )}
+    >
       {/* The hero leads this page, so its title only needs to reach screen readers. */}
       <h1 className={starredOnly ? "text-4xl font-bold tracking-wide uppercase" : "sr-only"}>
         {starredOnly ? "Starred workouts" : "Workouts"}
@@ -86,19 +92,15 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
 
       <WorkoutNav current={starredOnly ? "/workouts/starred" : "/workouts"} />
 
-      <div
-        className={cn(
-          !starredOnly &&
-            "lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start lg:gap-10"
-        )}
-      >
+      <div>
         {!starredOnly && (
-          <div className="lg:sticky lg:top-24">
+          <>
             <NextSessionCard />
-          </div>
+            <HomeStats />
+          </>
         )}
 
-        <section aria-label={starredOnly ? "Starred workouts" : "Workout history"} className={starredOnly ? "mt-6" : "mt-8 lg:mt-0"}>
+        <section aria-label={starredOnly ? "Starred workouts" : "Workout history"} className={starredOnly ? "mt-6" : "mt-8"}>
           {workouts.length === 0 ? (
             <p className="text-muted-foreground">
               {starredOnly
@@ -107,7 +109,17 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
             </p>
           ) : (
             <>
-              <div className="flex items-baseline justify-between gap-4">
+              <div
+                className={cn(
+                  !starredOnly && "lg:flex lg:items-start lg:justify-between lg:gap-8"
+                )}
+              >
+              <div
+                className={cn(
+                  "flex items-baseline justify-between gap-4",
+                  !starredOnly && "lg:justify-start"
+                )}
+              >
                 {!starredOnly && (
                   <h2 className="text-3xl font-bold tracking-wide uppercase">History</h2>
                 )}
@@ -118,7 +130,11 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
                 </p>
               </div>
 
-              <div role="search" aria-label="Find workouts" className="mt-3">
+              <div
+                role="search"
+                aria-label="Find workouts"
+                className={cn("mt-3", !starredOnly && "lg:mt-0 lg:w-[28rem]")}
+              >
                 <div className="flex gap-2">
                   <div className="relative min-w-0 flex-1">
                     <Label htmlFor="workout-search" className="sr-only">
@@ -189,6 +205,8 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
                 </div>
               </div>
 
+              </div>
+
               {narrowed && (
                 <Button
                   type="button"
@@ -206,13 +224,13 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
                 </p>
               )}
 
-              <ul className="mt-3 divide-y">
+              <ul className={cn("mt-3", !starredOnly && "lg:grid lg:grid-cols-2 lg:gap-x-10")}>
                 {results.map((workout) => {
                   const workingSets = workout.workout_sets.filter((set) => !set.is_warmup).length;
                   const date = dateParts(workout.performed_on);
                   const muscles = workoutMuscles(workout.workout_sets.map((set) => set.exercises?.name));
                   return (
-                    <li key={workout.id} className="relative">
+                    <li key={workout.id} className="relative border-t">
                       <Link
                         href={`/workouts/${workout.id}`}
                         className="flex gap-4 rounded-md py-4 pr-12 transition-colors outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"

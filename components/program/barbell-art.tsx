@@ -4,8 +4,8 @@ const PLATE_HEIGHTS = [68, 68, 56, 44, 34, 24];
 export function BarbellArt({ plates }: { plates: number }) {
   const loaded = PLATE_HEIGHTS.slice(0, plates);
   return (
-    <svg viewBox="0 0 360 72" className="block h-auto w-full" fill="currentColor" aria-hidden="true">
-      <rect x="0" y="34" width="360" height="4" />
+    <svg viewBox="0 0 360 72" className="block h-auto w-full overflow-visible lg:h-24" fill="currentColor" aria-hidden="true">
+      <rect x="-2000" y="34" width="4360" height="4" />
       <rect x="116" y="27" width="6" height="18" rx="1.5" />
       <rect x="238" y="27" width="6" height="18" rx="1.5" />
       {loaded.flatMap((height, index) => {

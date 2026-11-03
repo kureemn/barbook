@@ -1,31 +1,19 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { E1rmChart } from "@/components/dashboard/e1rm-chart";
+import { TrainingStats } from "@/components/dashboard/training-stats";
 import { Button } from "@/components/ui/button";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { WorkoutNav } from "@/components/workouts/workout-nav";
 import {
-  bestEstimatedTotal,
   e1rmHistory,
   LIFTS,
-  volumeLast30Days,
-  workoutsThisMonth,
   type DashboardWorkout,
 } from "@/lib/dashboard";
 import { useRequireAuth } from "@/lib/neon/use-auth-guard";
-import { formatDate, loadDashboardWorkouts, todayLocal } from "@/lib/workouts";
-
-function Stat({ label, value, note }: { label: string; value: ReactNode; note?: string }) {
-  return (
-    <div className="rounded-lg border bg-card p-4">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-heading text-4xl font-bold tabular-nums">{value}</dd>
-      {note && <dd className="mt-1 text-sm text-muted-foreground">{note}</dd>}
-    </div>
-  );
-}
+import { formatDate, loadDashboardWorkouts } from "@/lib/workouts";
 
 export default function DashboardPage() {
   const status = useRequireAuth();
@@ -42,28 +30,16 @@ export default function DashboardPage() {
   if (error) return <PageError message={error} />;
   if (status !== "authed" || !workouts) return <PageLoading />;
 
-  const today = todayLocal();
   const history = e1rmHistory(workouts);
-  const total = bestEstimatedTotal(history);
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
       <h1 className="text-4xl font-bold tracking-wide uppercase">Dashboard</h1>
       <WorkoutNav current="/dashboard" />
 
-      <dl className="mt-6 grid gap-3 sm:grid-cols-3">
-        <Stat label="Workouts this month" value={workoutsThisMonth(workouts, today)} />
-        <Stat
-          label="Volume, last 30 days"
-          value={`${volumeLast30Days(workouts, today).toLocaleString()} lb`}
-          note="Working sets only"
-        />
-        <Stat
-          label="Best estimated total"
-          value={total === null ? "Not yet" : `${Math.round(total).toLocaleString()} lb`}
-          note={total === null ? "Log squat, bench, and deadlift to see this" : "Best of each lift, added"}
-        />
-      </dl>
+      <div className="mt-6">
+        <TrainingStats workouts={workouts} />
+      </div>
 
       <section aria-labelledby="e1rm-heading" className="mt-8">
         <h2 id="e1rm-heading" className="text-2xl font-semibold tracking-wide uppercase">

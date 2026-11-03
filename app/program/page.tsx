@@ -28,7 +28,7 @@ import {
   WEEKS,
   weekTarget,
 } from "@/lib/programs";
-import { cn } from "@/lib/utils";
+import { cn, PAGE_CLASS } from "@/lib/utils";
 import { formatDate, todayLocal } from "@/lib/workouts";
 
 const weekNumbers = Array.from({ length: WEEKS }, (_, index) => index + 1);
@@ -84,44 +84,74 @@ export default function ProgramPage() {
   const logged = run?.program_sessions.length ?? 0;
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <h1 className="text-4xl font-bold tracking-wide uppercase">{PROGRAM_NAME}</h1>
-      <WorkoutNav current="/program" />
-
-      {run ? (
-        <p className="mt-6 text-muted-foreground">
-          Started {formatDate(run.started_on)}.
-        </p>
-      ) : (
-        <div className="mt-6 flex flex-col gap-4">
-          <p className="text-muted-foreground">
-            Four days a week for six weeks: squat, bench, deadlift, and a second bench day. Reps drop
-            and effort climbs through week 5, then week 6 is a lighter deload. Weights are suggested
-            from what you&apos;ve logged, and you can change anything.
-          </p>
-          <Button size="lg" className="self-start" disabled={busy} onClick={handleStart}>
+    <main className={PAGE_CLASS}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-4xl font-bold tracking-wide uppercase lg:text-6xl">{PROGRAM_NAME}</h1>
+          <WorkoutNav current="/program" />
+          {run ? (
+            <>
+              <p className="mt-2 text-muted-foreground">Started {formatDate(run.started_on)}.</p>
+              <div className="max-w-xl">
+                <ProgramProgress logged={logged} />
+              </div>
+            </>
+          ) : (
+            <p className="mt-2 max-w-prose text-muted-foreground">
+              Four days a week for six weeks. Reps drop and effort climbs through week 5, then week 6
+              is a lighter deload. Weights are suggested from what you&apos;ve logged, and you can
+              change anything.
+            </p>
+          )}
+        </div>
+        {!run && (
+          <Button size="lg" className="h-16 w-full px-8 font-heading text-2xl font-bold tracking-wide uppercase lg:w-auto" disabled={busy} onClick={handleStart}>
             {busy ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              <Loader2 className="size-5 animate-spin" aria-hidden="true" />
             ) : (
-              <Play className="size-4" aria-hidden="true" />
+              <Play className="size-5 fill-current" aria-hidden="true" />
             )}
             Start this program
           </Button>
-        </div>
-      )}
+        )}
+        {run && next && (
+          <Button asChild size="lg" className="h-16 w-full px-8 font-heading text-2xl font-bold tracking-wide uppercase lg:w-auto">
+            <Link href={`/workouts/new?week=${next.week}&day=${next.day}`}>
+              <Play className="size-5 fill-current" aria-hidden="true" />
+              Week {next.week}, Day {next.day}: {next.name}
+            </Link>
+          </Button>
+        )}
+      </div>
 
-      {run && <ProgramProgress logged={logged} />}
+      <section aria-labelledby="days-heading" className="mt-8">
+        <h2 id="days-heading" className="text-2xl font-semibold tracking-wide uppercase">
+          What&apos;s in each day
+        </h2>
+        <ul className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {dayNumbers.map((day) => {
+            const session = programSession(1, day);
+            return (
+              <li key={day} className="rounded-lg border bg-card p-3 lg:p-4">
+                <p className="text-xs font-medium text-muted-foreground uppercase">Day {day}</p>
+                <h3 className="font-heading text-2xl leading-tight font-bold tracking-wide uppercase">
+                  {session.name}
+                </h3>
+                <ul className="mt-2 flex flex-col gap-1 text-sm">
+                  {session.exercises.map((exercise, index) => (
+                    <li key={exercise.name} className={index === 0 ? "font-semibold" : undefined}>
+                      {exercise.name}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
-      {run && next && (
-        <Button asChild size="lg" className="mt-4 w-full sm:w-auto">
-          <Link href={`/workouts/new?week=${next.week}&day=${next.day}`}>
-            <Play className="size-4" aria-hidden="true" />
-            Start Week {next.week}, Day {next.day}: {next.name}
-          </Link>
-        </Button>
-      )}
-
-      <ol className="mt-6 flex flex-col gap-3">
+      <h2 className="mt-8 text-2xl font-semibold tracking-wide uppercase">The 6 weeks</h2>
+      <ol className="mt-3 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
         {weekNumbers.map((week) => {
           const target = weekTarget(week);
           return (

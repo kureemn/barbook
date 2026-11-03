@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { client } from "@/lib/neon/client";
 import { EquipmentPicture } from "@/components/exercises/equipment-picture";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { VIEWS, viewFor } from "@/components/workouts/workout-nav";
 import { cn } from "@/lib/utils";
@@ -31,28 +32,31 @@ export function SiteHeader() {
         <span className="font-heading text-2xl font-bold tracking-wide uppercase">Barbook</span>
       </Link>
       {data?.user && (
-        <>
-          <nav aria-label="Main" className="hidden h-full flex-1 md:flex">
-            {VIEWS.map((view) => {
-              const active = view.href === current;
-              return (
-                <Link
-                  key={view.href}
-                  href={view.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "flex items-center px-3 text-sm font-medium outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
-                    active
-                      ? "text-foreground shadow-[inset_0_-3px_0_var(--primary)]"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {view.label}
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="ml-auto flex items-center gap-1">
+        <nav aria-label="Main" className="hidden h-full md:flex">
+          {VIEWS.map((view) => {
+            const active = view.href === current;
+            return (
+              <Link
+                key={view.href}
+                href={view.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center px-3 text-sm font-medium outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
+                  active
+                    ? "text-foreground shadow-[inset_0_-3px_0_var(--primary)]"
+                    : "text-muted-foreground"
+                )}
+              >
+                {view.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+      <div className="ml-auto flex items-center gap-1">
+        <ThemeToggle />
+        {data?.user && (
+          <>
             <span className="hidden text-sm text-muted-foreground lg:inline">
               {data.user.name || data.user.email}
             </span>
@@ -60,9 +64,9 @@ export function SiteHeader() {
               <LogOut className="size-4" aria-hidden="true" />
               Log out
             </Button>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </header>
   );
 }

@@ -61,6 +61,32 @@
   --input: #84878d;
   --ring: #16181c;
   --radius: 0.625rem;
+  --chalk: #f2f0ea;
+}
+
+/* The chart colors here were validated separately, against the dark card. */
+.dark {
+  --background: #16181c;
+  --foreground: #f2f0ea;
+  --card: #1f2227;
+  --card-foreground: #f2f0ea;
+  --popover: #1f2227;
+  --popover-foreground: #f2f0ea;
+  --secondary: #2a2e34;
+  --secondary-foreground: #f2f0ea;
+  --muted: #2a2e34;
+  --muted-foreground: #b4b6ba;
+  --accent: #2a2e34;
+  --accent-foreground: #f2f0ea;
+  --destructive: #ff8a8d;
+  --border: #3a3f46;
+  --series-squat: #3987e5;
+  --series-bench: #d95926;
+  --series-deadlift: #199e70;
+  --muscle-also: #8f3b29;
+  --muscle-rest: #4a4f57;
+  --input: #5b616a;
+  --ring: #f2f0ea;
 }
 
 @layer base {
@@ -70,6 +96,9 @@
   html {
     @apply font-sans;
     color-scheme: light;
+    &.dark {
+      color-scheme: dark;
+    }
     /* Keeps a focused field from landing under the sticky top bar. */
     scroll-padding-top: 5rem;
   }

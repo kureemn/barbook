@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { client } from "@/lib/neon/client";
+import { EquipmentPicture } from "@/components/exercises/equipment-picture";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export function SiteHeader() {
@@ -21,10 +22,10 @@ export function SiteHeader() {
     <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 sm:px-6">
       <Link
         href={data?.user ? "/workouts" : "/"}
-        className="flex min-h-11 items-center gap-2 font-semibold"
+        className="flex min-h-11 items-center gap-2"
       >
-        <Dumbbell className="size-5 text-primary" aria-hidden="true" />
-        <span>Barbook</span>
+        <EquipmentPicture equipment="barbell" className="h-6 w-8 text-primary" />
+        <span className="font-heading text-2xl font-bold tracking-wide uppercase">Barbook</span>
       </Link>
       {data?.user && (
         <div className="flex items-center gap-3">

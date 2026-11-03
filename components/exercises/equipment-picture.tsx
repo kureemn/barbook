@@ -70,11 +70,17 @@ const PICTURES: Record<Equipment, ReactNode> = {
   ),
 };
 
-export function EquipmentPicture({ equipment }: { equipment: Equipment }) {
+export function EquipmentPicture({
+  equipment,
+  className = "h-9 w-12 text-foreground",
+}: {
+  equipment: Equipment;
+  className?: string;
+}) {
   return (
     <svg
       viewBox="0 0 64 48"
-      className="h-9 w-12 text-foreground"
+      className={className}
       fill="none"
       stroke="currentColor"
       strokeWidth="2.5"

@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRedirectIfAuthed } from "@/lib/neon/use-auth-guard";
+import { CalendarDays, Loader2, Play } from "lucide-react";
+import { EquipmentPicture } from "@/components/exercises/equipment-picture";
+import { MuscleMap } from "@/components/exercises/muscle-map";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { exerciseInfo } from "@/lib/exercise-info";
+import { useRedirectIfAuthed } from "@/lib/neon/use-auth-guard";
+
+const squat = exerciseInfo("Squat")!;
 
 export default function HomePage() {
   const status = useRedirectIfAuthed();
@@ -17,24 +22,51 @@ export default function HomePage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-16 text-center">
-      <div className="flex flex-col items-center gap-4">
-        <h1 className="max-w-xl text-4xl font-semibold tracking-tight">
-          All your training, in one logbook
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:py-16">
+      <div className="flex flex-col items-start gap-5">
+        <h1 className="text-5xl leading-none font-bold tracking-wide uppercase sm:text-7xl">
+          Log every set. Follow the plan.
         </h1>
         <p className="max-w-md text-balance text-muted-foreground">
-          Build your programs, log every set, and get suggested weights for
-          your next session. Free for any lifter.
+          A free training log for powerlifters, with a 6-week program, suggested weights, and a rest
+          timer under every set.
         </p>
+        <div className="flex flex-wrap gap-3">
+          <Button asChild size="lg">
+            <Link href="/auth/sign-up">
+              <Play className="size-4" aria-hidden="true" />
+              Create an account
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="/auth/sign-in">Log in</Link>
+          </Button>
+        </div>
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button asChild size="lg">
-          <Link href="/auth/sign-up">Create an account</Link>
-        </Button>
-        <Button asChild size="lg" variant="outline">
-          <Link href="/auth/sign-in">Log in</Link>
-        </Button>
-      </div>
+
+      <ul className="grid gap-3 sm:grid-cols-3">
+        <li className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+          <CalendarDays className="size-10 text-primary" aria-hidden="true" />
+          <h2 className="text-2xl font-semibold tracking-wide uppercase">6-week program</h2>
+          <p className="text-sm text-muted-foreground">
+            Open the app, see today&apos;s session, and start it.
+          </p>
+        </li>
+        <li className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+          <MuscleMap info={squat} />
+          <h2 className="text-2xl font-semibold tracking-wide uppercase">Know what you train</h2>
+          <p className="text-sm text-muted-foreground">
+            See the muscles and equipment for each exercise.
+          </p>
+        </li>
+        <li className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+          <EquipmentPicture equipment="barbell" className="h-10 w-14 text-primary" />
+          <h2 className="text-2xl font-semibold tracking-wide uppercase">Know what to lift</h2>
+          <p className="text-sm text-muted-foreground">
+            Get a suggested weight from what you logged last time.
+          </p>
+        </li>
+      </ul>
     </main>
   );
 }

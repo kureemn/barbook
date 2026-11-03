@@ -53,7 +53,7 @@ export default function TemplatesPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Templates</h1>
+        <h1 className="text-4xl font-bold tracking-wide uppercase">Templates</h1>
         <Button asChild>
           <Link href="/templates/new">
             <Plus className="size-4" aria-hidden="true" />
@@ -71,7 +71,7 @@ export default function TemplatesPage() {
         <ul className="mt-6 flex flex-col gap-3">
           {templates.map((template) => (
             <li key={template.id} className="rounded-lg border bg-card p-4">
-              <h2 className="font-medium">{template.name}</h2>
+              <h2 className="text-2xl font-semibold tracking-wide uppercase">{template.name}</h2>
               <ul className="mt-2 flex flex-col gap-1 text-sm text-muted-foreground">
                 {template.template_exercises.map((exercise) => (
                   <li key={exercise.id} className="tabular-nums">

@@ -21,7 +21,7 @@ function Stat({ label, value, note }: { label: string; value: ReactNode; note?: 
   return (
     <div className="rounded-lg border bg-card p-4">
       <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="mt-1 text-3xl font-semibold tabular-nums">{value}</dd>
+      <dd className="mt-1 font-heading text-4xl font-bold tabular-nums">{value}</dd>
       {note && <dd className="mt-1 text-sm text-muted-foreground">{note}</dd>}
     </div>
   );
@@ -48,7 +48,7 @@ export default function DashboardPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+      <h1 className="text-4xl font-bold tracking-wide uppercase">Dashboard</h1>
       <WorkoutNav current="/dashboard" />
 
       <dl className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -66,7 +66,7 @@ export default function DashboardPage() {
       </dl>
 
       <section aria-labelledby="e1rm-heading" className="mt-8">
-        <h2 id="e1rm-heading" className="text-lg font-semibold">
+        <h2 id="e1rm-heading" className="text-2xl font-semibold tracking-wide uppercase">
           Estimated 1-rep max (lb)
         </h2>
         {history.length === 0 ? (
@@ -75,7 +75,7 @@ export default function DashboardPage() {
               Log a working set of squat, bench, or deadlift to start this chart.
             </p>
             <Button asChild className="mt-4">
-              <Link href="/workouts/new">Add workout</Link>
+              <Link href="/workouts/new">Start workout</Link>
             </Button>
           </div>
         ) : (

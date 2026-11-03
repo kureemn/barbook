@@ -103,7 +103,7 @@ export function TemplateForm({ template }: { template?: Template }) {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight">
+      <h1 className="text-4xl font-bold tracking-wide uppercase">
         {template ? "Edit template" : "New template"}
       </h1>
 

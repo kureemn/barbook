@@ -19,7 +19,7 @@ import type { SessionKey } from "@/lib/programs";
 import { flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
 import type { Suggestion } from "@/lib/suggestions";
 import type { Template } from "@/lib/templates";
-import { selectClass } from "@/lib/utils";
+import { cn, selectClass } from "@/lib/utils";
 import {
   createWorkout,
   deleteWorkout,
@@ -87,6 +87,26 @@ function startingGroups(
       is_warmup: set.is_warmup,
     })),
   }));
+}
+
+/** Column headings show once, on the first set. Screen readers hear them on every set. */
+function SetLabel({
+  htmlFor,
+  hidden,
+  shown,
+  spoken,
+}: {
+  htmlFor: string;
+  hidden: boolean;
+  shown: string;
+  spoken: string;
+}) {
+  return (
+    <Label htmlFor={htmlFor} className={hidden ? "sr-only" : undefined}>
+      <span className="sr-only">{spoken}</span>
+      <span aria-hidden="true">{shown}</span>
+    </Label>
+  );
 }
 
 export function WorkoutForm({
@@ -232,7 +252,7 @@ export function WorkoutForm({
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight">
+      <h1 className="text-4xl font-bold tracking-wide uppercase">
         {workout ? "Edit workout" : "Workout"}
       </h1>
       {template && (
@@ -290,7 +310,7 @@ export function WorkoutForm({
         </div>
 
         <section aria-labelledby="exercises-heading" className="flex flex-col gap-3">
-          <h2 id="exercises-heading" className="text-lg font-semibold">
+          <h2 id="exercises-heading" className="text-2xl font-semibold tracking-wide uppercase">
             Exercises
           </h2>
           {groups.map((group, groupIndex) => {
@@ -301,7 +321,9 @@ export function WorkoutForm({
             const exerciseError = errors[`sets.${firstSet}.exercise_id`];
             return (
               <fieldset key={group.key} className="rounded-lg border bg-card p-4">
-                <legend className="px-1 text-sm font-medium">Exercise {groupIndex + 1}</legend>
+                <legend className="px-1 font-heading text-lg font-semibold tracking-wide uppercase">
+                  Exercise {groupIndex + 1}
+                </legend>
                 <div className="grid gap-2">
                   <Label htmlFor={`exercise-${group.key}`}>Exercise</Label>
                   <select
@@ -364,12 +386,23 @@ export function WorkoutForm({
                     return (
                       <li key={set.key} className="border-t pt-3">
                         <div role="group" aria-label={`Set ${setIndex + 1}`}>
-                          <p aria-hidden="true" className="text-sm font-medium">
-                            Set {setIndex + 1}
-                          </p>
-                          <div className="mt-2 grid grid-cols-3 items-start gap-3">
-                            <div className="grid gap-2">
-                              <Label htmlFor={`weight-${set.key}`}>Weight (lb)</Label>
+                          <div className="grid grid-cols-[1.75rem_1fr_1fr_1fr_2.75rem] items-start gap-2">
+                            <span
+                              aria-hidden="true"
+                              className={cn(
+                                "flex size-7 items-center justify-center rounded-full bg-secondary text-sm font-semibold tabular-nums",
+                                setIndex === 0 ? "mt-[31px]" : "mt-2"
+                              )}
+                            >
+                              {setIndex + 1}
+                            </span>
+                            <div className="grid min-w-0 gap-2">
+                              <SetLabel
+                                htmlFor={`weight-${set.key}`}
+                                hidden={setIndex > 0}
+                                shown="Lb"
+                                spoken="Weight in pounds"
+                              />
                               <Input
                                 id={`weight-${set.key}`}
                                 type="number"
@@ -388,8 +421,13 @@ export function WorkoutForm({
                                 message={errors[`${path}.weight`]}
                               />
                             </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor={`reps-${set.key}`}>Reps</Label>
+                            <div className="grid min-w-0 gap-2">
+                              <SetLabel
+                                htmlFor={`reps-${set.key}`}
+                                hidden={setIndex > 0}
+                                shown="Reps"
+                                spoken="Reps"
+                              />
                               <Input
                                 id={`reps-${set.key}`}
                                 type="number"
@@ -408,8 +446,13 @@ export function WorkoutForm({
                                 message={errors[`${path}.reps`]}
                               />
                             </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor={`rpe-${set.key}`}>RPE</Label>
+                            <div className="grid min-w-0 gap-2">
+                              <SetLabel
+                                htmlFor={`rpe-${set.key}`}
+                                hidden={setIndex > 0}
+                                shown="RPE"
+                                spoken="RPE"
+                              />
                               <Input
                                 id={`rpe-${set.key}`}
                                 type="number"
@@ -428,9 +471,20 @@ export function WorkoutForm({
                                 message={errors[`${path}.rpe`]}
                               />
                             </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className={setIndex === 0 ? "mt-[23px]" : undefined}
+                              aria-label={`Remove set ${setIndex + 1}`}
+                              disabled={group.sets.length === 1}
+                              onClick={() => removeSet(group.key, set.key)}
+                            >
+                              <Trash2 className="size-4" aria-hidden="true" />
+                            </Button>
                           </div>
-                          <div className="mt-2 flex items-center justify-between gap-3">
-                            <label className="flex min-h-11 items-center gap-2 text-sm">
+                          <div className="mt-2 flex items-center gap-2">
+                            <label className="flex min-h-11 shrink-0 items-center gap-1.5 text-xs">
                               <input
                                 type="checkbox"
                                 className="size-5 accent-primary"
@@ -441,22 +495,13 @@ export function WorkoutForm({
                               />
                               Warm-up
                             </label>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              disabled={group.sets.length === 1}
-                              onClick={() => removeSet(group.key, set.key)}
-                            >
-                              <Trash2 className="size-4" aria-hidden="true" />
-                              Remove set {setIndex + 1}
-                            </Button>
-                          </div>
-                          <div className="mt-2">
-                            <SetRest
-                              timer={timer}
-                              setKey={set.key}
-                              setNumber={setIndex + 1}
-                            />
+                            <div className="min-w-0 flex-1">
+                              <SetRest
+                                timer={timer}
+                                setKey={set.key}
+                                setNumber={setIndex + 1}
+                              />
+                            </div>
                           </div>
                         </div>
                       </li>

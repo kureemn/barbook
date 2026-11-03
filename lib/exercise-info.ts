@@ -70,7 +70,7 @@ const INFO: Record<string, ExerciseInfo> = {
     equipment: ["dumbbell", "bench"],
   },
   "cable row": { main: ["lats"], also: ["traps", "biceps"], equipment: ["cable"] },
-  "calf raise": { main: ["calves"], also: [], equipment: ["machine"] },
+  "calf raise": { main: ["calves"], also: [], equipment: ["dumbbell"] },
   "close-grip bench": {
     main: ["triceps", "chest"],
     also: ["shoulders"],

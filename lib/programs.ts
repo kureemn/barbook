@@ -90,7 +90,7 @@ const SIX_WEEK_STRENGTH: Program = {
       exercises: [
         { name: "Squat", target: byWeek(MAIN) },
         { name: "Pause Squat", target: byWeek(SECONDARY) },
-        { name: "Leg Curl", target: byWeek(ACCESSORY) },
+        { name: "Good Morning", target: byWeek(ACCESSORY) },
         { name: "Hanging Leg Raise", target: byWeek(ACCESSORY) },
       ],
     },
@@ -100,7 +100,7 @@ const SIX_WEEK_STRENGTH: Program = {
         { name: "Bench", target: byWeek(MAIN) },
         { name: "Barbell Row", target: byWeek(SECONDARY) },
         { name: "Military Press", target: byWeek(SECONDARY) },
-        { name: "Tricep Pushdown", target: byWeek(ACCESSORY) },
+        { name: "Close-Grip Bench", target: byWeek(ACCESSORY) },
       ],
     },
     {
@@ -108,8 +108,8 @@ const SIX_WEEK_STRENGTH: Program = {
       exercises: [
         { name: "Deadlift", target: byWeek(MAIN) },
         { name: "Romanian Deadlift", target: byWeek(SECONDARY) },
-        { name: "Lat Pulldown", target: byWeek(ACCESSORY) },
-        { name: "Back Extension", target: byWeek(ACCESSORY) },
+        { name: "Dumbbell Row", target: byWeek(ACCESSORY) },
+        { name: "Hip Thrust", target: byWeek(ACCESSORY) },
       ],
     },
     {
@@ -128,7 +128,7 @@ const SIX_WEEK_STRENGTH: Program = {
     return `Main lifts: ${sets} × ${reps} @ RPE ${rpe}`;
   },
   origin:
-    "Written for Barbook, not taken from a coach or a published program. It uses a common strength pattern: reps fall as effort rises, followed by a deload. The specific exercises and numbers haven't been tested on lifters.",
+    "Written for Barbook, not taken from a coach or a published program. It uses a common strength pattern: reps fall as effort rises, followed by a deload. The specific exercises and numbers haven't been tested on lifters. Its exercises use barbells, dumbbells, and a pull-up bar.",
   sources: [],
 };
 
@@ -211,7 +211,7 @@ const FIVE_THREE_ONE_BBB: Program = {
       name: "Squat",
       exercises: [
         { name: "Squat", target: mainLift },
-        { name: "Leg Curl", target: fiveByTen },
+        { name: "Romanian Deadlift", target: fiveByTen },
       ],
     },
   ],
@@ -223,7 +223,7 @@ const FIVE_THREE_ONE_BBB: Program = {
       "Deload: 5, 5, 5 @ 40–60%",
     ][week - 1],
   origin:
-    "Based on 5/3/1 by Jim Wendler, and not affiliated with him. The sets, reps, and percentages follow the published 5/3/1 cycle, using a training max of 90% of your estimated max. Barbook simplifies it: it works out your training max from your best logged set instead of adding to it each cycle. The order of days, the assistance exercises, and using 50% for 5 × 10 are Barbook's choices, so check the original before relying on them.",
+    "Based on 5/3/1 by Jim Wendler, and not affiliated with him. The sets, reps, and percentages follow the published 5/3/1 cycle, using a training max of 90% of your estimated max. Barbook simplifies it: it works out your training max from your best logged set instead of adding to it each cycle. The order of days, the assistance exercises, and using 50% for 5 × 10 are Barbook's choices, so check the original before relying on them. Its exercises use barbells, dumbbells, and a pull-up bar.",
   sources: [
     {
       label: "5/3/1 cycle summary (Lift Vault)",
@@ -251,10 +251,10 @@ const PHUL: Program = {
         { name: "Bench", target: phulTarget(3, 4, 5) },
         { name: "Incline Bench", target: phulTarget(3, 4, 6) },
         { name: "Barbell Row", target: phulTarget(3, 4, 6) },
-        { name: "Lat Pulldown", target: phulTarget(3, 4, 8) },
+        { name: "Pull-Up", target: phulTarget(3, 4, 8) },
         { name: "Military Press", target: fixed({ sets: 3, reps: 6, rpe: 8 }) },
         { name: "Bicep Curl", target: fixed({ sets: 3, reps: 8, rpe: 8 }) },
-        { name: "Tricep Pushdown", target: fixed({ sets: 3, reps: 8, rpe: 8 }) },
+        { name: "Close-Grip Bench", target: fixed({ sets: 3, reps: 8, rpe: 8 }) },
       ],
     },
     {
@@ -262,8 +262,8 @@ const PHUL: Program = {
       exercises: [
         { name: "Squat", target: phulTarget(3, 4, 5) },
         { name: "Deadlift", target: phulTarget(3, 4, 5) },
-        { name: "Leg Press", target: phulTarget(3, 4, 8) },
-        { name: "Leg Curl", target: fixed({ sets: 3, reps: 12, rpe: 8 }) },
+        { name: "Bulgarian Split Squat", target: phulTarget(3, 4, 8) },
+        { name: "Romanian Deadlift", target: fixed({ sets: 3, reps: 12, rpe: 8 }) },
         { name: "Calf Raise", target: fixed({ sets: 3, reps: 8, rpe: 8 }) },
       ],
     },
@@ -273,10 +273,10 @@ const PHUL: Program = {
         { name: "Incline Bench", target: fixed({ sets: 4, reps: 10, rpe: 8 }) },
         { name: "Dumbbell Row", target: fixed({ sets: 4, reps: 10, rpe: 8 }) },
         { name: "Dumbbell Bench", target: fixed({ sets: 4, reps: 12, rpe: 8 }) },
-        { name: "Cable Row", target: fixed({ sets: 4, reps: 10, rpe: 8 }) },
+        { name: "Barbell Row", target: fixed({ sets: 4, reps: 10, rpe: 8 }) },
         { name: "Lateral Raise", target: fixed({ sets: 4, reps: 12, rpe: 8 }) },
         { name: "Bicep Curl", target: fixed({ sets: 4, reps: 12, rpe: 8 }) },
-        { name: "Tricep Pushdown", target: fixed({ sets: 4, reps: 12, rpe: 8 }) },
+        { name: "Close-Grip Bench", target: fixed({ sets: 4, reps: 12, rpe: 8 }) },
       ],
     },
     {
@@ -284,8 +284,8 @@ const PHUL: Program = {
       exercises: [
         { name: "Front Squat", target: fixed({ sets: 4, reps: 10, rpe: 8 }) },
         { name: "Lunge", target: fixed({ sets: 4, reps: 10, rpe: 8 }) },
-        { name: "Leg Curl", target: fixed({ sets: 4, reps: 10, rpe: 8 }) },
-        { name: "Leg Extension", target: fixed({ sets: 4, reps: 12, rpe: 8 }) },
+        { name: "Romanian Deadlift", target: fixed({ sets: 4, reps: 10, rpe: 8 }) },
+        { name: "Bulgarian Split Squat", target: fixed({ sets: 4, reps: 12, rpe: 8 }) },
         { name: "Calf Raise", target: fixed({ sets: 4, reps: 12, rpe: 8 }) },
       ],
     },
@@ -293,7 +293,7 @@ const PHUL: Program = {
   weekSummary: (week) =>
     week <= 3 ? "Power days: main lifts 3 × 5" : "Power days: main lifts 4 × 5",
   origin:
-    "Based on PHUL by Brandon Campbell, and not affiliated with him. The days, exercises, and rep ranges come from Hevy's write-up, because the original Muscle & Strength article couldn't be read directly. Barbook simplifies it: it picks one rep target from each range, adds RPE 8, moves from 3 to 4 sets in week 4, and sets the length to 6 weeks. It also swaps exercises Barbook doesn't list, using Tricep Pushdown for skullcrushers and Dumbbell Bench for chest flies.",
+    "Based on PHUL by Brandon Campbell, and not affiliated with him. The days, exercises, and rep ranges come from Hevy's write-up, because the original Muscle & Strength article couldn't be read directly. Barbook simplifies it: it picks one rep target from each range, adds RPE 8, moves from 3 to 4 sets in week 4, and sets the length to 6 weeks. It also replaces machine, cable, and other exercises to fit barbells, dumbbells, and a pull-up bar: Pull-Up for lat pulldowns, Close-Grip Bench for skullcrushers and pushdowns, Barbell Row for cable rows, Dumbbell Bench for chest flies, Bulgarian Split Squat for leg presses and leg extensions, and Romanian Deadlift for leg curls. That makes it further from the original than the other changes.",
   sources: [
     { label: "PHUL write-up (Hevy)", url: "https://www.hevyapp.com/phul-power-hypertrophy-upper-lower/" },
     { label: "Original article (Muscle & Strength)", url: "https://www.muscleandstrength.com/workouts/phul-workout" },

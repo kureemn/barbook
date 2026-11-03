@@ -95,8 +95,8 @@ function ChooseProgram({
       <h1 className="text-4xl font-bold tracking-wide uppercase lg:text-6xl">Choose a program</h1>
       <WorkoutNav current="/program" />
       <p className="mt-2 max-w-prose text-muted-foreground">
-        All of them are 4 days a week. You can switch whenever you like, and your logged workouts
-        stay in your history.
+        All of them are 4 days a week and use barbells, dumbbells, a bench, a rack, and a pull-up
+        bar. You can switch whenever you like, and your logged workouts stay in your history.
       </p>
       <ul className="mt-6 flex flex-col gap-6">
         {PROGRAMS.map((program) => (

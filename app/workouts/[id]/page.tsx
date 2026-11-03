@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { ExerciseDetails } from "@/components/exercises/exercise-details";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -106,7 +107,10 @@ export default function WorkoutDetailPage() {
         {groupByExercise(workout.workout_sets).map((group) => (
           <section key={group.sets[0].id} className="rounded-lg border bg-card p-4">
             <h2 className="font-semibold">{group.sets[0].exercises?.name ?? "Exercise"}</h2>
-            <ul className="mt-2 flex flex-col gap-1">
+            <div className="mt-3 empty:hidden">
+              <ExerciseDetails name={group.sets[0].exercises?.name} />
+            </div>
+            <ul className="mt-3 flex flex-col gap-1">
               {group.sets.map((set) => (
                 <li key={set.id} className="flex flex-wrap items-baseline gap-x-2 text-lg tabular-nums">
                   <span>

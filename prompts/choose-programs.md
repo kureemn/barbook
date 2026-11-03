@@ -28,3 +28,11 @@ Each program now shows where it comes from, what Barbook changed, and source lin
 ## A bug caught by checking the math
 
 5/3/1 sets log without RPE, which the app counts as all-out. So a routine 170 × 1 would have looked like a 170 lb max and lowered the next training max. The agent caught this while checking the saved numbers by hand and changed the training max to use the best logged set.
+
+## Fitting my equipment
+
+Right after this merged, I added:
+
+> sorry also just to be mindful, I mostly have access to barbell or dumbell, no smith machines when writing programs
+
+No program used a Smith machine, but several used cables and machines. The agent replaced those with barbell, dumbbell, and pull-up bar exercises in a follow-up PR, and added a test that fails if a machine exercise is added to a program. It made PHUL further from the original, and the app says so.

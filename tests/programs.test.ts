@@ -10,6 +10,7 @@ import {
   totalSessions,
   type Program,
 } from "@/lib/programs";
+import { exerciseInfo } from "@/lib/exercise-info";
 import { setsFromTemplate } from "@/lib/set-groups";
 import { STARTER_EXERCISES } from "@/lib/starter-exercises";
 
@@ -29,6 +30,17 @@ describe.each(PROGRAMS.map((program) => [program.name, program] as const))("%s",
     const starters = STARTER_EXERCISES.map((exercise) => exercise.name);
     for (const session of allSessions(program)) {
       for (const exercise of session.exercises) expect(starters).toContain(exercise.name);
+    }
+  });
+
+  it("only needs barbells, dumbbells, a bench, a rack, or a pull-up bar", () => {
+    const available = ["barbell", "dumbbell", "bench", "rack", "pullUpBar"];
+    for (const session of allSessions(program)) {
+      for (const exercise of session.exercises) {
+        const equipment = exerciseInfo(exercise.name)?.equipment ?? [];
+        expect(equipment.length).toBeGreaterThan(0);
+        expect(equipment.filter((item) => !available.includes(item))).toEqual([]);
+      }
     }
   });
 

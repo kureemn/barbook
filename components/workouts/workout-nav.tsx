@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 
 const VIEWS = [
   { href: "/workouts", label: "All" },
+  { href: "/program", label: "Program" },
   { href: "/workouts/starred", label: "Starred" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/templates", label: "Templates" },

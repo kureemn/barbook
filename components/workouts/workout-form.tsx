@@ -14,12 +14,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { AddExerciseDialog } from "@/components/workouts/add-exercise-dialog";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { RestAnnouncement, SetRest, useRestTimer } from "@/components/workouts/rest-timer";
+import { recordSession } from "@/lib/program-runs";
+import type { SessionKey } from "@/lib/programs";
 import { flattenGroups, groupByExercise, setsFromTemplate } from "@/lib/set-groups";
 import type { Suggestion } from "@/lib/suggestions";
 import type { Template } from "@/lib/templates";
 import { selectClass } from "@/lib/utils";
 import {
   createWorkout,
+  deleteWorkout,
   formatDate,
   loadExercises,
   todayLocal,
@@ -90,10 +93,12 @@ export function WorkoutForm({
   workout,
   template,
   suggestions,
+  program,
 }: {
   workout?: Workout;
   template?: Template;
   suggestions?: Record<string, Suggestion>;
+  program?: SessionKey & { runId: string };
 }) {
   const router = useRouter();
   const timer = useRestTimer();
@@ -202,7 +207,18 @@ export function WorkoutForm({
         await updateWorkout(workout.id, details, sets);
         router.replace(`/workouts/${workout.id}`);
       } else {
-        const id = await createWorkout({ ...details, template_id: template?.id ?? null }, sets);
+        // A program session is shaped like a template, but has no template row to link to.
+        const templateId = program ? null : (template?.id ?? null);
+        const id = await createWorkout({ ...details, template_id: templateId }, sets);
+        if (program) {
+          try {
+            await recordSession(program.runId, program, id);
+          } catch (recordError) {
+            // Undo it, so saving again can't log the same session's workout twice.
+            await deleteWorkout(id);
+            throw recordError;
+          }
+        }
         router.replace(`/workouts/${id}`);
       }
     } catch {
@@ -217,7 +233,7 @@ export function WorkoutForm({
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
       <h1 className="text-2xl font-semibold tracking-tight">
-        {workout ? "Edit workout" : "Add workout"}
+        {workout ? "Edit workout" : "Workout"}
       </h1>
       {template && (
         <p className="mt-2 text-sm text-muted-foreground">
@@ -302,6 +318,7 @@ export function WorkoutForm({
                         changeGroup(group.key, {
                           exercise_id: e.target.value,
                           suggestion: undefined,
+                          target: undefined,
                         });
                       }
                     }}
@@ -331,6 +348,13 @@ export function WorkoutForm({
                     {group.suggestion.basedOn.rpe !== null &&
                       ` at RPE ${Number(group.suggestion.basedOn.rpe)}`}{" "}
                     on {formatDate(group.suggestion.basedOn.performed_on)}.
+                  </p>
+                )}
+                {!group.suggestion && group.target && (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Aim for {group.target.reps} reps
+                    {group.target.rpe !== null && ` at RPE ${Number(group.target.rpe)}`}. There&apos;s no
+                    history to suggest a weight from yet, so choose your own.
                   </p>
                 )}
 
@@ -497,7 +521,11 @@ export function WorkoutForm({
         onCreated={(created) => {
           setExercises((current) => [...(current ?? []), created]);
           if (newExerciseFor !== null) {
-            changeGroup(newExerciseFor, { exercise_id: created.id, suggestion: undefined });
+            changeGroup(newExerciseFor, {
+              exercise_id: created.id,
+              suggestion: undefined,
+              target: undefined,
+            });
           }
         }}
       />

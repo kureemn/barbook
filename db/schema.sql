@@ -130,6 +130,45 @@ alter table workouts drop constraint if exists workouts_template_fk;
 alter table workouts add constraint workouts_template_fk foreign key (template_id, user_id)
   references templates (id, user_id) on delete set null (template_id);
 
+-- Program runs: one row each time a lifter starts a program. The program's
+-- weeks and targets live in lib/programs.ts, since they're the same for everyone.
+create table if not exists program_runs (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null default auth.user_id()::uuid references neon_auth."user" (id) on delete cascade,
+  program_key  text not null,
+  started_on   date not null,
+  ended_on     date,
+  created_at   timestamptz not null default now(),
+
+  constraint program_runs_key_valid check (program_key in ('six-week-strength')),
+  constraint program_runs_dates_valid check (ended_on is null or ended_on >= started_on),
+  constraint program_runs_id_owner_unique unique (id, user_id)
+);
+
+-- Only one program can be running at a time. Ended runs stay as history.
+create unique index if not exists program_runs_one_active_idx
+  on program_runs (user_id) where ended_on is null;
+
+-- Program sessions: one row per finished session, tying it to the workout logged
+-- for it. Deleting that workout removes the row, which reopens the session.
+create table if not exists program_sessions (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.user_id()::uuid references neon_auth."user" (id) on delete cascade,
+  run_id      uuid not null,
+  week        integer not null,
+  day         integer not null,
+  workout_id  uuid not null,
+
+  constraint program_sessions_run_fk foreign key (run_id, user_id)
+    references program_runs (id, user_id) on delete cascade,
+  constraint program_sessions_workout_fk foreign key (workout_id, user_id)
+    references workouts (id, user_id) on delete cascade,
+  constraint program_sessions_week_range check (week between 1 and 6),
+  constraint program_sessions_day_range check (day between 1 and 4),
+  constraint program_sessions_once unique (run_id, week, day),
+  constraint program_sessions_workout_once unique (workout_id)
+);
+
 -- Row Level Security: a signed-in user reaches only rows where user_id is theirs.
 -- USING picks which existing rows qualify. WITH CHECK tests the row after a
 -- write, so nobody can hand a row to another account.
@@ -137,7 +176,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['exercises', 'workouts', 'workout_sets', 'templates', 'template_exercises'] loop
+  foreach t in array array['exercises', 'workouts', 'workout_sets', 'templates', 'template_exercises', 'program_runs', 'program_sessions'] loop
     execute format('alter table %I enable row level security', t);
 
     execute format('drop policy if exists %I on %I', t || '_select_own', t);

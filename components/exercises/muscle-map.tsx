@@ -36,20 +36,30 @@ function fillFor(muscle: Muscle, info: ExerciseInfo) {
   return "var(--muscle-rest)";
 }
 
-function Figure({ label, shapes, info }: { label: string; shapes: Shapes; info: ExerciseInfo }) {
+function Figure({
+  label,
+  shapes,
+  info,
+  small,
+}: {
+  label: string;
+  shapes: Shapes;
+  info: ExerciseInfo;
+  small: boolean;
+}) {
   const entries = Object.entries(shapes) as [Muscle, string][];
   const side = entries.map(([muscle, path]) => (
     <path key={muscle} d={path} fill={fillFor(muscle, info)} />
   ));
   return (
-    <figure className="flex w-14 flex-col items-center gap-1">
-      <svg viewBox="16 2 68 192" className="h-28 w-full" aria-hidden="true">
+    <figure className={small ? "w-7" : "flex w-14 flex-col items-center gap-1"}>
+      <svg viewBox="16 2 68 192" className={small ? "h-16 w-full" : "h-28 w-full"} aria-hidden="true">
         <circle cx="50" cy="13" r="9" fill="var(--muscle-rest)" />
         <path d="M45 21H55V27L50 30L45 27Z" fill="var(--muscle-rest)" />
         {side}
         <g transform="translate(100 0) scale(-1 1)">{side}</g>
       </svg>
-      <figcaption className="text-xs text-muted-foreground">{label}</figcaption>
+      <figcaption className={small ? "sr-only" : "text-xs text-muted-foreground"}>{label}</figcaption>
     </figure>
   );
 }
@@ -58,9 +68,11 @@ function Figure({ label, shapes, info }: { label: string; shapes: Shapes; info: 
 export function MuscleMap({
   info,
   description,
+  size = "md",
 }: {
   info: ExerciseInfo;
   description?: string;
+  size?: "sm" | "md";
 }) {
   const names = (muscles: Muscle[]) => muscles.map((muscle) => MUSCLE_NAMES[muscle]).join(", ");
   const label =
@@ -70,8 +82,8 @@ export function MuscleMap({
     }`;
   return (
     <div role="img" aria-label={label} className="flex shrink-0 gap-1">
-      <Figure label="Front" shapes={FRONT} info={info} />
-      <Figure label="Back" shapes={BACK} info={info} />
+      <Figure label="Front" shapes={FRONT} info={info} small={size === "sm"} />
+      <Figure label="Back" shapes={BACK} info={info} small={size === "sm"} />
     </div>
   );
 }

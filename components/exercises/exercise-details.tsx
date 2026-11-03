@@ -1,11 +1,16 @@
+"use client";
+
+import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { EquipmentPicture } from "@/components/exercises/equipment-picture";
+import { VideoPlayer, VideoThumbnail } from "@/components/exercises/form-video";
 import { MuscleMap } from "@/components/exercises/muscle-map";
 import { EQUIPMENT_NAMES, exerciseInfo, MUSCLE_NAMES, type ExerciseInfo } from "@/lib/exercise-info";
+import { exerciseVideo } from "@/lib/exercise-videos";
 
 /**
- * What an exercise trains and what it needs. Shows nothing for one the lifter added.
- * Collapsed, it stays out of the way of the sets until tapped.
+ * What an exercise trains, what it needs, and how it's done. Shows nothing for one the
+ * lifter added. Collapsed, the equipment stays out of the way of the sets until tapped.
  */
 export function ExerciseDetails({
   name,
@@ -14,32 +19,54 @@ export function ExerciseDetails({
   name: string | undefined;
   collapsed?: boolean;
 }) {
+  const [playing, setPlaying] = useState(false);
   const info = exerciseInfo(name);
+  const video = exerciseVideo(name);
   if (!info) return null;
 
   if (collapsed) {
     return (
-      <details className="group rounded-md bg-muted/60">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-md px-3 py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
-          <span className="min-w-0">
+      <div className="flex flex-col gap-2 rounded-md bg-muted/60 p-2">
+        <div className="flex items-center gap-3">
+          {video && !playing && (
+            <VideoThumbnail video={video} onPlay={() => setPlaying(true)} className="w-28 sm:w-36" />
+          )}
+          <MuscleMap info={info} size="sm" />
+          <p className="min-w-0 text-sm font-medium">
             {info.main.map((muscle) => MUSCLE_NAMES[muscle]).join(", ")}
-            <span className="text-muted-foreground">
-              {" · "}
+          </p>
+        </div>
+        {video && playing && <VideoPlayer video={video} onClose={() => setPlaying(false)} />}
+        <details className="group">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-md px-1 text-sm text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+            <span className="min-w-0">
               {info.equipment.map((equipment) => EQUIPMENT_NAMES[equipment]).join(", ")}
             </span>
-          </span>
-          <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
-        </summary>
-        <div className="px-3 pb-3">
-          <Details info={info} />
-        </div>
-      </details>
+            <ChevronDown className="size-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="px-1 pb-2">
+            <Details info={info} />
+          </div>
+        </details>
+      </div>
     );
   }
 
   return (
-    <div className="rounded-md bg-muted/60 p-3">
+    <div className="flex flex-col gap-3 rounded-md bg-muted/60 p-3">
       <Details info={info} />
+      {video &&
+        (playing ? (
+          <VideoPlayer video={video} onClose={() => setPlaying(false)} />
+        ) : (
+          <div className="flex items-center gap-3 text-sm">
+            <VideoThumbnail video={video} onPlay={() => setPlaying(true)} className="w-28 sm:w-36" />
+            <p className="min-w-0">
+              Check your form
+              <span className="block text-xs text-muted-foreground">{video.channel}</span>
+            </p>
+          </div>
+        ))}
     </div>
   );
 }

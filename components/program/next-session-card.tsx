@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play, Plus } from "lucide-react";
 import { BarbellArt } from "@/components/program/barbell-art";
 import { Button } from "@/components/ui/button";
 import { loadActiveRun, type ProgramRun } from "@/lib/program-runs";
@@ -38,6 +38,7 @@ function Hero({
   wideSide,
   href,
   plates,
+  action,
   links,
 }: {
   label: string;
@@ -49,6 +50,8 @@ function Hero({
   wideSide?: ReactNode;
   href: string;
   plates: number;
+  /** A second way in, under Start workout. */
+  action?: ReactNode;
   links: ReactNode;
 }) {
   return (
@@ -74,11 +77,29 @@ function Hero({
               Start workout
             </Link>
           </Button>
+          {action}
           <div className="mt-2 flex flex-wrap justify-between gap-x-4">{links}</div>
         </div>
         {wideSide && <div className="hidden lg:block">{wideSide}</div>}
       </div>
     </section>
+  );
+}
+
+/** Start workout opens the next session, so this is the way to log anything else. */
+function NewWorkoutButton() {
+  return (
+    <Button
+      asChild
+      variant="outline"
+      size="lg"
+      className="mt-2 w-full border-primary-foreground bg-transparent font-semibold text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground dark:border-primary-foreground dark:bg-transparent dark:hover:bg-primary-foreground/15"
+    >
+      <Link href="/workouts/new">
+        <Plus className="size-5" aria-hidden="true" />
+        New workout
+      </Link>
+    </Button>
   );
 }
 
@@ -183,12 +204,8 @@ export function NextSessionCard() {
       }
       href={`/workouts/new?week=${session.week}&day=${session.day}`}
       plates={plates}
-      links={
-        <>
-          {programLink}
-          <HeroLink href="/workouts/new">Log a different workout</HeroLink>
-        </>
-      }
+      action={<NewWorkoutButton />}
+      links={programLink}
     />
   );
 }

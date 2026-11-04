@@ -113,7 +113,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
               </EmptyState>
             ) : (
               <p className="text-muted-foreground">
-                No workouts yet. Hit Start workout to log your first.
+                No workouts yet. Start one above to log your first.
               </p>
             )
           ) : (

@@ -37,6 +37,7 @@ function Hero({
   wideDetail,
   wideSide,
   href,
+  startLabel,
   plates,
   action,
   links,
@@ -49,6 +50,7 @@ function Hero({
   wideDetail?: string;
   wideSide?: ReactNode;
   href: string;
+  startLabel: string;
   plates: number;
   /** A second way in, under Start workout. */
   action?: ReactNode;
@@ -70,11 +72,11 @@ function Hero({
           <Button
             asChild
             size="lg"
-            className="mt-5 h-16 w-full bg-foreground font-heading text-2xl font-bold tracking-wide text-background uppercase hover:bg-foreground/85"
+            className="mt-5 h-auto min-h-16 w-full bg-foreground font-heading text-xl font-bold whitespace-normal sm:text-2xl tracking-wide text-background uppercase hover:bg-foreground/85"
           >
             <Link href={href}>
               <Play className="size-5 fill-current" aria-hidden="true" />
-              Start workout
+              {startLabel}
             </Link>
           </Button>
           {action}
@@ -86,20 +88,23 @@ function Hero({
   );
 }
 
-/** Start workout opens the next session, so this is the way to log anything else. */
-function NewWorkoutButton() {
+/** The main button follows the program, so this is the way to log anything else. */
+function OwnWorkoutButton() {
   return (
-    <Button
-      asChild
-      variant="outline"
-      size="lg"
-      className="mt-2 w-full border-primary-foreground bg-transparent font-semibold text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground dark:border-primary-foreground dark:bg-transparent dark:hover:bg-primary-foreground/15"
-    >
-      <Link href="/workouts/new">
-        <Plus className="size-5" aria-hidden="true" />
-        New workout
-      </Link>
-    </Button>
+    <>
+      <Button
+        asChild
+        variant="outline"
+        size="lg"
+        className="mt-2 w-full border-primary-foreground bg-transparent font-semibold text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground dark:border-primary-foreground dark:bg-transparent dark:hover:bg-primary-foreground/15"
+      >
+        <Link href="/workouts/new">
+          <Plus className="size-5" aria-hidden="true" />
+          Start my own workout
+        </Link>
+      </Button>
+      <p className="mt-2 text-sm">Choose your own exercises, or log a past workout.</p>
+    </>
   );
 }
 
@@ -147,8 +152,9 @@ export function NextSessionCard() {
       <Hero
         label="Start training"
         title="Ready to lift?"
-        detail="Start an empty workout, or choose a program to follow."
+        detail="Start your own workout, or choose a program to follow."
         href="/workouts/new"
+        startLabel="Start my own workout"
         plates={PLATES_WITHOUT_PROGRAM}
         wideSide={
           <SideList
@@ -175,6 +181,7 @@ export function NextSessionCard() {
         title="Program finished"
         detail={`You've logged every session of ${program.name}. Nice work.`}
         href="/workouts/new"
+        startLabel="Start my own workout"
         plates={plates}
         links={
           <HeroLink href="/program">
@@ -203,8 +210,9 @@ export function NextSessionCard() {
         />
       }
       href={`/workouts/new?week=${session.week}&day=${session.day}`}
+      startLabel="Start program workout"
       plates={plates}
-      action={<NewWorkoutButton />}
+      action={<OwnWorkoutButton />}
       links={programLink}
     />
   );

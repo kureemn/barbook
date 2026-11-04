@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AddExerciseDialog } from "@/components/workouts/add-exercise-dialog";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
+import { RPE_MEANING } from "@/lib/dashboard";
 import { createTemplate, updateTemplate, type Template } from "@/lib/templates";
 import { selectClass } from "@/lib/utils";
 import { validateTemplate } from "@/lib/validation";
@@ -130,6 +131,7 @@ export function TemplateForm({ template }: { template?: Template }) {
           <h2 id="exercises-heading" className="text-lg font-semibold">
             Exercises
           </h2>
+          <p className="text-sm text-muted-foreground">{RPE_MEANING}</p>
           {rows.map((row, index) => {
             const path = `exercises.${index}`;
             return (

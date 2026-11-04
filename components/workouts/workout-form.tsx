@@ -47,6 +47,7 @@ import {
   type Exercise,
   type Workout,
 } from "@/lib/workouts";
+import { RPE_IF_BLANK, RPE_MEANING } from "@/lib/dashboard";
 import { isBodyweight } from "@/lib/exercise-info";
 import { validateWorkout } from "@/lib/validation";
 import { clearDraft, draftKey, readDraft, writeDraft } from "@/lib/workout-draft";
@@ -454,6 +455,9 @@ export function WorkoutForm({
             </h2>
             {live && <RestLength timer={timer} />}
           </div>
+          <p className="text-sm text-muted-foreground">
+            {RPE_MEANING} {RPE_IF_BLANK}
+          </p>
           {live && (
             <p className="text-sm text-muted-foreground">
               Tap ✓ after each set to start your rest.
@@ -621,7 +625,7 @@ export function WorkoutForm({
                                 htmlFor={`rpe-${set.key}`}
                                 hidden={setIndex > 0}
                                 shown="RPE"
-                                spoken="RPE"
+                                spoken="RPE, how hard the set felt, from 6 to 10"
                               />
                               <Input
                                 id={`rpe-${set.key}`}

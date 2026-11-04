@@ -128,6 +128,10 @@ Sections 1 to 7 are the original plan, unchanged. This table shows what happened
 | Not planned: programs and Start workout | Added | Done | Logging alone doesn't tell you what to do today. | Added three 4-day programs with a Start workout button. Each says where it comes from, and they fit barbells and dumbbells because that's mostly what I have. |
 | Not planned: workout mode | Added | Done | Measuring the screen exposed what looking at it hadn't: 109 controls, and entries lost on reload. | Added set check-offs, saved drafts, and a pinned Finish button, because it was built like a form to fill out afterward. |
 | Not planned: wider desktop layouts | Added | Done | Designing mobile first left big screens looking bare. | Main pages now use the screen, because the desktop felt empty. |
+| Not planned: form videos | Added | Done | I check my form often, so a short video during a workout helps more than one I have to go find. | Added a short video for each of the 34 starter exercises, in [PR #62](https://github.com/kureemn/barbook/pull/62), because I wanted to correct my form while lifting. |
+| Not planned: clearer start buttons | Added | Done | Making a button easier to find doesn't help if its name is still unclear. | My tester asked how to create a new workout. [PR #66](https://github.com/kureemn/barbook/pull/66) made a clear button, and [PR #68](https://github.com/kureemn/barbook/pull/68) renamed them Start program workout and Start my own workout. |
+| Not planned: RPE explanation | Added | Done | A term I use all the time can still lose another lifter. | My tester didn't know what RPE stands for, so [PR #64](https://github.com/kureemn/barbook/pull/64) explains it where it's entered. |
+| Not planned: Program page table | Added | Done | My first simpler design hid information I wanted, so the fix was removing repetition, not content. | Combined the weeks and days into one table in [PR #70](https://github.com/kureemn/barbook/pull/70), because the page felt busy. |
 
 **Other notes on the plan**
 

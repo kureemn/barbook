@@ -13,3 +13,11 @@ It drafted these from the repo, PR history, and this project's conversations. It
 ## What I still need to do
 
 The drafts are written in my voice, so I should read them and change anything that isn't how I'd say it, especially the Learning column. The two reflection questions aren't part of this PR.
+
+## Keeping it current
+
+After more changes merged, the agent pointed out that Plan vs. Reality was missing them. I checked first:
+
+> yES, BUT ARE WE NOT SUPPSOED TO CHANGE THE PLAN?
+
+The agent added rows to section 8 only and confirmed sections 1 to 7 still match the original plan commit.

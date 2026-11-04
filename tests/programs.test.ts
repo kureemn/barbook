@@ -6,6 +6,7 @@ import {
   PROGRAM_KEYS,
   PROGRAMS,
   programSession,
+  scheduleCell,
   targetText,
   totalSessions,
   type Program,
@@ -205,6 +206,29 @@ describe("nextSession", () => {
     for (const program of PROGRAMS) {
       expect(nextSession(program, allSessions(program))).toBeNull();
     }
+  });
+});
+
+describe("scheduleCell", () => {
+  const block = getProgram("six-week-strength");
+  const logged = [{ week: 1, day: 1, workout_id: "abc" }];
+
+  it("opens the logged workout for a finished session", () => {
+    expect(scheduleCell(block, 1, 1, logged)).toMatchObject({ state: "done", href: "/workouts/abc" });
+  });
+
+  it("marks only the first unlogged session as next", () => {
+    expect(scheduleCell(block, 1, 2, logged)).toMatchObject({
+      state: "next",
+      href: "/workouts/new?week=1&day=2",
+    });
+    expect(scheduleCell(block, 1, 3, logged).state).toBe("upcoming");
+    expect(scheduleCell(block, 6, 4, logged).state).toBe("upcoming");
+  });
+
+  it("says which session a link opens", () => {
+    expect(scheduleCell(block, 1, 2, logged).label).toContain("Week 1, Day 2: Bench");
+    expect(scheduleCell(block, 1, 1, logged).label).toContain("done");
   });
 });
 

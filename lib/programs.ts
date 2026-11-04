@@ -334,6 +334,28 @@ export function programSession(program: Program, week: number, day: number): Pro
   };
 }
 
+export type LoggedKey = SessionKey & { workout_id: string };
+
+/** What one week-and-day square of the schedule shows and opens. */
+export function scheduleCell(program: Program, week: number, day: number, logged: LoggedKey[]) {
+  const { title } = programSession(program, week, day);
+  const done = logged.find((session) => session.week === week && session.day === day);
+  if (done) {
+    return {
+      state: "done" as const,
+      href: `/workouts/${done.workout_id}`,
+      label: `${title}, done. View workout.`,
+    };
+  }
+  const next = nextSession(program, logged);
+  const isNext = next?.week === week && next.day === day;
+  return {
+    state: isNext ? ("next" as const) : ("upcoming" as const),
+    href: `/workouts/new?week=${week}&day=${day}`,
+    label: isNext ? `Start ${title}, your next session` : `Start ${title}`,
+  };
+}
+
 /** The first session not yet logged, or null when the whole program is done. */
 export function nextSession(program: Program, done: SessionKey[]): ProgramSession | null {
   for (let week = 1; week <= program.weeks; week++) {

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, ExternalLink, Loader2, Play } from "lucide-react";
+import { ExternalLink, Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { ProgramProgress } from "@/components/program/program-progress";
+import { ProgramSchedule } from "@/components/program/program-schedule";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,7 +28,7 @@ import {
   type Program,
   type ProgramKey,
 } from "@/lib/programs";
-import { cn, PAGE_CLASS } from "@/lib/utils";
+import { PAGE_CLASS } from "@/lib/utils";
 import { formatDate, todayLocal } from "@/lib/workouts";
 
 const BIG_BUTTON = "h-16 w-full px-8 font-heading text-2xl font-bold tracking-wide uppercase lg:w-auto";
@@ -201,8 +202,6 @@ export default function ProgramPage() {
   const program = getProgram(run.program_key);
   const next = nextSession(program, run.program_sessions);
   const logged = run.program_sessions.length;
-  const weekNumbers = Array.from({ length: program.weeks }, (_, index) => index + 1);
-  const dayNumbers = program.days.map((_, index) => index + 1);
 
   return (
     <main className={PAGE_CLASS}>
@@ -231,76 +230,21 @@ export default function ProgramPage() {
         )}
       </div>
 
-      <section aria-labelledby="days-heading" className="mt-8">
-        <h2 id="days-heading" className="text-2xl font-semibold tracking-wide uppercase">
-          What&apos;s in each day
+      <section aria-labelledby="schedule-heading" className="mt-8">
+        <h2 id="schedule-heading" className="text-2xl font-semibold tracking-wide uppercase">
+          The {program.weeks} weeks
         </h2>
-        <div className="mt-3">
-          <ProgramDays program={program} />
-        </div>
+        <ProgramSchedule program={program} logged={run.program_sessions} />
       </section>
 
-      <h2 className="mt-8 text-2xl font-semibold tracking-wide uppercase">
-        The {program.weeks} weeks
-      </h2>
-      <ol className="mt-3 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-        {weekNumbers.map((week) => (
-          <li key={week} className="rounded-lg border bg-card p-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-              <h3 className="text-xl font-semibold tracking-wide uppercase">
-                Week {week}
-                {week === program.deloadWeek && " (deload)"}
-              </h3>
-              <p className="text-sm text-muted-foreground tabular-nums">
-                {program.weekSummary(week)}
-              </p>
-            </div>
-            <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {dayNumbers.map((day) => {
-                const session = programSession(program, week, day);
-                const done = run.program_sessions.find(
-                  (item) => item.week === week && item.day === day
-                );
-                const isNext = next?.week === week && next.day === day;
-                return (
-                  <li key={day}>
-                    <Link
-                      href={
-                        done
-                          ? `/workouts/${done.workout_id}`
-                          : `/workouts/new?week=${week}&day=${day}`
-                      }
-                      aria-label={
-                        done ? `${session.title}, done. View workout.` : `Start ${session.title}`
-                      }
-                      className={cn(
-                        "flex min-h-14 flex-col justify-center rounded-md border px-3 py-2 text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
-                        isNext && "border-primary",
-                        done && "bg-muted"
-                      )}
-                    >
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        Day {day}
-                        {done && <Check className="size-3.5 text-foreground" aria-hidden="true" />}
-                      </span>
-                      <span className="font-medium">{session.name}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </li>
-        ))}
-      </ol>
-
-      <section aria-labelledby="origin-heading" className="mt-8 max-w-prose">
-        <h2 id="origin-heading" className="text-2xl font-semibold tracking-wide uppercase">
-          Where this program comes from
-        </h2>
-        <div className="mt-2">
+      <details className="mt-6 border-t pt-1">
+        <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium">
+          About this program
+        </summary>
+        <div className="max-w-prose pb-1">
           <ProgramOrigin program={program} />
         </div>
-      </section>
+      </details>
 
       {next && (
         <Button variant="outline" className="mt-6" onClick={() => setConfirming(true)}>

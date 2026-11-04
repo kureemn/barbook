@@ -24,6 +24,11 @@ export type DashboardWorkout = {
 
 export type E1rmPoint = { date: string } & Partial<Record<Lift, number>>;
 
+// Kept beside the formula they describe.
+export const RPE_MEANING =
+  "RPE means rate of perceived exertion: how hard a set felt, from 6 to 10. 10 means no reps left, 8 means 2 left.";
+export const RPE_IF_BLANK = "A blank RPE counts as 10 in your estimated max.";
+
 /**
  * Reps to failure = reps + (10 - RPE), treating a missing RPE as 10.
  * Estimated 1-rep max = weight x (1 + reps to failure / 30), except that a true

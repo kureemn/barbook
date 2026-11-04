@@ -3,6 +3,8 @@ import {
   bestEstimatedTotal,
   e1rmHistory,
   estimatedOneRepMax,
+  RPE_IF_BLANK,
+  RPE_MEANING,
   volumeLast30Days,
   workoutsThisMonth,
   type DashboardSet,
@@ -117,5 +119,15 @@ describe("bestEstimatedTotal", () => {
 
   it("is null until all three lifts are logged", () => {
     expect(bestEstimatedTotal([{ date: TODAY, squat: 300, bench: 200 }])).toBeNull();
+  });
+});
+
+describe("the RPE explanation", () => {
+  it("matches the estimated max formula", () => {
+    expect(RPE_MEANING).toContain("10 means no reps left, 8 means 2 left");
+    // RPE 8 leaves 2 reps, so 5 reps at RPE 8 estimates like 7 reps at RPE 10.
+    expect(estimatedOneRepMax(100, 5, 8)).toBe(estimatedOneRepMax(100, 7, 10));
+    expect(RPE_IF_BLANK).toContain("counts as 10");
+    expect(estimatedOneRepMax(100, 5, null)).toBe(estimatedOneRepMax(100, 5, 10));
   });
 });

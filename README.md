@@ -22,7 +22,7 @@ I built Barbook because, since I stopped competing, I've lost the coaching apps 
 ## How to use it
 
 1. Go to the [live app](https://barbook-six.vercel.app) and create an account.
-2. Open **Program** and choose a program, or start an empty workout from the Workouts page: **New workout** when you're on a program, **Start workout** when you aren't.
+2. Open **Program** and choose a program, or tap **Start empty workout** on the Workouts page to choose your own exercises.
 3. Log your sets. Tap ✓ after each one to start your rest, then tap **Finish workout**.
 4. To add a past workout, open **Date and details** to set its date. You don't need to tap ✓ on its sets.
 

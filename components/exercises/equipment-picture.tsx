@@ -6,10 +6,10 @@ const PICTURES: Record<Equipment, ReactNode> = {
   barbell: (
     <>
       <path d="M2 24H62" />
-      <rect x="9" y="8" width="5" height="32" rx="1.5" className="fill-current" />
-      <rect x="16" y="13" width="4" height="22" rx="1.5" className="fill-current" />
-      <rect x="50" y="8" width="5" height="32" rx="1.5" className="fill-current" />
-      <rect x="44" y="13" width="4" height="22" rx="1.5" className="fill-current" />
+      <rect x="9" y="13" width="4" height="22" rx="1.5" className="fill-current" />
+      <rect x="15" y="8" width="5" height="32" rx="1.5" className="fill-current" />
+      <rect x="44" y="8" width="5" height="32" rx="1.5" className="fill-current" />
+      <rect x="51" y="13" width="4" height="22" rx="1.5" className="fill-current" />
     </>
   ),
   dumbbell: (

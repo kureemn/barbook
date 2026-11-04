@@ -29,4 +29,4 @@ After that merged, I looked at it and wrote:
 
 > The thing that confused me was like the difference between start workout and log a new workout. And I don't think this makes that distinction.
 
-I was right: PR #66 made the second option easier to find, but "Start workout" and "New workout" still sounded like the same thing. The agent renamed them to say what each does. The main button now names the session, like "Start Day 2", and the second says "Start empty workout" with a line explaining it's for choosing your own exercises or logging a past workout.
+I was right: PR #66 made the second option easier to find, but "Start workout" and "New workout" still sounded like the same thing. The agent first tried "Start Day 2" and "Start empty workout." I asked for different labels, and from its three options I chose the pair that differ only by whose plan they follow: "Start program workout" and "Start my own workout." A line under the second explains it's for choosing your own exercises or logging a past workout.

@@ -110,7 +110,7 @@ export default function DashboardPage() {
           title="Your progress starts here"
           action={
             <Button asChild>
-              <Link href="/workouts/new">Start empty workout</Link>
+              <Link href="/workouts/new">Start my own workout</Link>
             </Button>
           }
         >

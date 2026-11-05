@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { EquipmentPicture } from "@/components/exercises/equipment-picture";
+import { FormCues } from "@/components/exercises/form-cues";
 import { VideoPlayer, VideoThumbnail } from "@/components/exercises/form-video";
 import { MuscleMap } from "@/components/exercises/muscle-map";
 import { EQUIPMENT_NAMES, exerciseInfo, MUSCLE_NAMES, type ExerciseInfo } from "@/lib/exercise-info";
+import { exerciseCues } from "@/lib/exercise-cues";
 import { exerciseVideo } from "@/lib/exercise-videos";
 
 /**
@@ -22,6 +24,7 @@ export function ExerciseDetails({
   const [playing, setPlaying] = useState(false);
   const info = exerciseInfo(name);
   const video = exerciseVideo(name);
+  const cues = exerciseCues(name);
   if (!info) return null;
 
   if (collapsed) {
@@ -37,6 +40,7 @@ export function ExerciseDetails({
           </p>
         </div>
         {video && playing && <VideoPlayer video={video} onClose={() => setPlaying(false)} />}
+        {cues && <FormCues cues={cues} />}
         <details className="group">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-md px-1 text-sm text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
             <span className="min-w-0">
@@ -67,6 +71,7 @@ export function ExerciseDetails({
             </p>
           </div>
         ))}
+      {cues && <FormCues cues={cues} />}
     </div>
   );
 }

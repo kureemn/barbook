@@ -46,7 +46,12 @@ export function ProgramSchedule({ program, logged }: { program: Program; logged:
                     <Link
                       href={href}
                       aria-label={label}
-                      className="flex min-h-11 items-center rounded-md px-1 transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-2"
+                      className={cn(
+                        "flex min-h-11 items-center rounded-md px-1 transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-2",
+                        state === "done"
+                          ? "bg-tint-green text-tint-green-foreground hover:bg-tint-green/70"
+                          : "hover:bg-muted"
+                      )}
                     >
                       {state === "done" && <Check className="size-5" aria-hidden="true" />}
                       {state === "next" && (

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal, Star } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { HomeStats } from "@/components/dashboard/home-stats";
+import { PageBand } from "@/components/page-band";
 import { NextSessionCard } from "@/components/program/next-session-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,20 +81,23 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
   const thisYear = new Date().getFullYear();
 
   return (
-    <main className={PAGE_CLASS}>
-      <h1 className="mb-6 text-4xl font-bold tracking-tight">
-        {starredOnly ? "Starred workouts" : "Workouts"}
-      </h1>
+    <main className="flex-1">
+      {starredOnly ? (
+        <PageBand>
+          <h1 className="text-4xl font-bold tracking-tight">Starred workouts</h1>
+        </PageBand>
+      ) : (
+        <>
+          {/* The session leads this page, so its title only needs to reach screen readers. */}
+          <h1 className="sr-only">Workouts</h1>
+          <NextSessionCard />
+        </>
+      )}
 
       <WorkoutNav current={starredOnly ? "/workouts/starred" : "/workouts"} />
 
-      <div>
-        {!starredOnly && (
-          <>
-            <NextSessionCard />
-            <HomeStats />
-          </>
-        )}
+      <div className={PAGE_CLASS}>
+        {!starredOnly && <HomeStats />}
 
         <section aria-label={starredOnly ? "Starred workouts" : "Workout history"} className={starredOnly ? undefined : "mt-8"}>
           {workouts.length === 0 ? (

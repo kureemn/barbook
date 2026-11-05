@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { todayLocal } from "@/lib/workouts";
 
 const TONES = {
+  plain: "bg-background text-foreground",
   peach: "bg-tint-peach text-tint-peach-foreground",
   blue: "bg-tint-blue text-tint-blue-foreground",
   green: "bg-tint-green text-tint-green-foreground",

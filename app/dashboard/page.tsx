@@ -8,6 +8,7 @@ import { BarTrend } from "@/components/dashboard/bar-trend";
 import { MuscleBalance } from "@/components/dashboard/muscle-balance";
 import { Stat } from "@/components/dashboard/training-stats";
 import { EmptyState } from "@/components/empty-state";
+import { PageBand } from "@/components/page-band";
 import { Button } from "@/components/ui/button";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { WorkoutNav } from "@/components/workouts/workout-nav";
@@ -30,6 +31,13 @@ import {
 } from "@/lib/progress";
 import { PAGE_CLASS } from "@/lib/utils";
 import { dateParts, formatDate, loadDashboardWorkouts, todayLocal } from "@/lib/workouts";
+
+// Each lift keeps the color of its line on the chart below.
+const LIFT_CARDS = {
+  squat: "bg-tint-blue text-tint-blue-foreground",
+  bench: "bg-tint-orange text-tint-orange-foreground",
+  deadlift: "bg-tint-green text-tint-green-foreground",
+};
 
 function shortDate(date: string) {
   const { month, day } = dateParts(date);
@@ -80,43 +88,45 @@ export default function DashboardPage() {
   const { muscles, uncounted } = setsByMuscle(workouts, today);
 
   return (
-    <main className={PAGE_CLASS}>
-      <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
+    <main className="flex-1">
+      <PageBand>
+        <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
+        <dl className="mt-4 grid gap-5 lg:grid-cols-[5fr_4fr] lg:items-center lg:gap-10">
+          <div>
+            <dt className="text-sm">Best estimated total</dt>
+            <dd className="mt-1 text-6xl font-bold tracking-tight tabular-nums lg:text-7xl">
+              {total === null ? "Not yet" : `${Math.round(total).toLocaleString()} lb`}
+            </dd>
+            <dd className="mt-2 text-sm">
+              {total === null ? "Log squat, bench, and deadlift to see this" : "Best of each lift, added"}
+            </dd>
+            <dd className="mt-1 text-sm">
+              {strength
+                ? `${strength.ratio.toFixed(2)}× your bodyweight, at ${strength.bodyweight} lb, logged ${shortDate(strength.date)}`
+                : "Log all 3 lifts and your bodyweight to compare them"}
+            </dd>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Stat label="Workouts this month" value={workoutsThisMonth(workouts, today)} tone="plain" />
+            <Stat
+              label="Weeks in a row"
+              value={streak}
+              note={streak === 0 ? "Log a workout to start" : "With at least one workout"}
+              tone="plain"
+            />
+            <Stat
+              label="Volume, last 30 days"
+              value={`${volumeLast30Days(workouts, today).toLocaleString()} lb`}
+              note="Working sets only"
+              tone="plain"
+              className="col-span-2"
+            />
+          </div>
+        </dl>
+      </PageBand>
       <WorkoutNav current="/dashboard" />
 
-      <dl className="mt-6 grid gap-3 lg:grid-cols-[5fr_4fr]">
-        <div className="rounded-3xl bg-primary p-5 text-primary-foreground lg:p-6">
-          <dt className="text-sm">Best estimated total</dt>
-          <dd className="mt-1 text-5xl font-bold tracking-tight tabular-nums lg:text-6xl">
-            {total === null ? "Not yet" : `${Math.round(total).toLocaleString()} lb`}
-          </dd>
-          <dd className="mt-2 text-sm">
-            {total === null ? "Log squat, bench, and deadlift to see this" : "Best of each lift, added"}
-          </dd>
-          <dd className="mt-1 text-sm">
-            {strength
-              ? `${strength.ratio.toFixed(2)}× your bodyweight, at ${strength.bodyweight} lb, logged ${shortDate(strength.date)}`
-              : "Log all 3 lifts and your bodyweight to compare them"}
-          </dd>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Stat label="Workouts this month" value={workoutsThisMonth(workouts, today)} tone="peach" />
-          <Stat
-            label="Weeks in a row"
-            value={streak}
-            note={streak === 0 ? "Log a workout to start" : "With at least one workout"}
-            tone="blue"
-          />
-          <Stat
-            label="Volume, last 30 days"
-            value={`${volumeLast30Days(workouts, today).toLocaleString()} lb`}
-            note="Working sets only"
-            tone="green"
-            className="col-span-2"
-          />
-        </div>
-      </dl>
-
+      <div className={PAGE_CLASS}>
       {workouts.length === 0 ? (
         <EmptyState
           icon={ChartLine}
@@ -131,15 +141,15 @@ export default function DashboardPage() {
         </EmptyState>
       ) : (
         <>
-          <section aria-labelledby="lifts-heading" className="mt-8">
+          <section aria-labelledby="lifts-heading">
             <h2 id="lifts-heading" className="text-xl font-bold tracking-tight">
               Your lifts
             </h2>
-            <ul className="mt-3 grid gap-6 lg:grid-cols-3">
+            <ul className="mt-3 grid gap-3 lg:grid-cols-3">
               {LIFTS.map((lift) => {
                 const summary = summaries.find((item) => item.category === lift.category);
                 return (
-                  <li key={lift.category} className="border-t pt-3">
+                  <li key={lift.category} className={`rounded-2xl p-4 ${LIFT_CARDS[lift.category]}`}>
                     <h3 className="flex items-center gap-2 text-sm font-medium">
                       <span
                         aria-hidden="true"
@@ -153,18 +163,18 @@ export default function DashboardPage() {
                         <p className="mt-1 text-4xl font-bold tracking-tight tabular-nums">
                           {Math.round(summary.best)} lb
                         </p>
-                        <p className="text-sm text-muted-foreground">Best estimated 1-rep max</p>
+                        <p className="text-sm">Best estimated 1-rep max</p>
                         <p className="mt-3 flex items-center gap-1.5 text-sm font-medium">
                           <ChangeIcon change={summary.change} />
                           {changeText(summary.change, summary.since)}
                         </p>
-                        <p className="mt-1 text-sm text-muted-foreground tabular-nums">
+                        <p className="mt-1 text-sm tabular-nums">
                           Heaviest set: {summary.heaviest.weight} lb × {summary.heaviest.reps},{" "}
                           {shortDate(summary.heaviest.date)}
                         </p>
                       </>
                     ) : (
-                      <p className="mt-2 text-sm text-muted-foreground">
+                      <p className="mt-2 text-sm">
                         Log a working set to see this.
                       </p>
                     )}
@@ -321,6 +331,7 @@ export default function DashboardPage() {
           </section>
         </>
       )}
+      </div>
     </main>
   );
 }

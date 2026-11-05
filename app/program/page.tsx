@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
+import { PageBand } from "@/components/page-band";
 import { ProgramProgress } from "@/components/program/program-progress";
 import { ProgramSchedule } from "@/components/program/program-schedule";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ function ProgramDays({ program }: { program: Program }) {
   return (
     <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {program.days.map((plan, index) => (
-        <li key={plan.name} className="rounded-2xl bg-card p-3 lg:p-4">
+        <li key={plan.name} className="rounded-2xl bg-background p-3 lg:p-4">
           <p className="text-xs font-medium text-muted-foreground">Day {index + 1}</p>
           <h3 className="text-lg leading-tight font-semibold tracking-tight">
             {plan.name}
@@ -93,21 +94,23 @@ function ChooseProgram({
 }) {
   return (
     <>
-      <h1 className="text-4xl font-bold tracking-tight">Choose a program</h1>
+      <PageBand>
+        <h1 className="text-4xl font-bold tracking-tight">Choose a program</h1>
+        <p className="mt-2 max-w-prose">
+          All of them are 4 days a week and use barbells, dumbbells, a bench, a rack, and a pull-up
+          bar. You can switch whenever you like, and your logged workouts stay in your history.
+        </p>
+      </PageBand>
       <WorkoutNav current="/program" />
-      <p className="mt-2 max-w-prose text-muted-foreground">
-        All of them are 4 days a week and use barbells, dumbbells, a bench, a rack, and a pull-up
-        bar. You can switch whenever you like, and your logged workouts stay in your history.
-      </p>
-      <ul className="mt-6 flex flex-col gap-6">
+      <ul className={`${PAGE_CLASS} flex flex-col gap-6`}>
         {PROGRAMS.map((program) => (
-          <li key={program.key} className="rounded-xl border bg-muted/40 p-4 lg:p-6">
+          <li key={program.key} className="rounded-2xl bg-card p-4 lg:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-muted-foreground">
                   {program.focus} · {program.weeks} weeks
                 </p>
-                <h2 className="mt-1 text-4xl font-bold tracking-tight">{program.name}</h2>
+                <h2 className="mt-1 text-3xl font-bold tracking-tight">{program.name}</h2>
                 <p className="mt-2 max-w-prose">{program.summary}</p>
               </div>
               <Button
@@ -193,7 +196,7 @@ export default function ProgramPage() {
 
   if (!run) {
     return (
-      <main className={PAGE_CLASS}>
+      <main className="flex-1">
         <ChooseProgram busy={starting} onStart={handleStart} />
       </main>
     );
@@ -204,33 +207,36 @@ export default function ProgramPage() {
   const logged = run.program_sessions.length;
 
   return (
-    <main className={PAGE_CLASS}>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-4xl font-bold tracking-tight">{program.name}</h1>
-          <WorkoutNav current="/program" />
-          <p className="mt-2 text-muted-foreground">
-            {program.focus}. Started {formatDate(run.started_on)}.
-          </p>
-          <div className="max-w-xl">
-            <ProgramProgress logged={logged} program={program} />
+    <main className="flex-1">
+      <PageBand>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-4xl font-bold tracking-tight">{program.name}</h1>
+            <p className="mt-2">
+              {program.focus}. Started {formatDate(run.started_on)}.
+            </p>
+            <div className="max-w-xl">
+              <ProgramProgress logged={logged} program={program} />
+            </div>
           </div>
+          {next ? (
+            <Button asChild size="lg" className={BIG_BUTTON}>
+              <Link href={`/workouts/new?week=${next.week}&day=${next.day}`}>
+                <Play className="size-5 fill-current" aria-hidden="true" />
+                Week {next.week}, Day {next.day}: {next.name}
+              </Link>
+            </Button>
+          ) : (
+            <Button size="lg" className={BIG_BUTTON} disabled={ending} onClick={handleEnd}>
+              Choose your next program
+            </Button>
+          )}
         </div>
-        {next ? (
-          <Button asChild size="lg" className={BIG_BUTTON}>
-            <Link href={`/workouts/new?week=${next.week}&day=${next.day}`}>
-              <Play className="size-5 fill-current" aria-hidden="true" />
-              Week {next.week}, Day {next.day}: {next.name}
-            </Link>
-          </Button>
-        ) : (
-          <Button size="lg" className={BIG_BUTTON} disabled={ending} onClick={handleEnd}>
-            Choose your next program
-          </Button>
-        )}
-      </div>
+      </PageBand>
+      <WorkoutNav current="/program" />
 
-      <section aria-labelledby="schedule-heading" className="mt-8">
+      <div className={PAGE_CLASS}>
+      <section aria-labelledby="schedule-heading">
         <h2 id="schedule-heading" className="text-xl font-bold tracking-tight">
           The {program.weeks} weeks
         </h2>
@@ -272,6 +278,7 @@ export default function ProgramPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </main>
   );
 }

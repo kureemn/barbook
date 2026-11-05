@@ -31,13 +31,15 @@ export function ExerciseDetails({
     return (
       <div className="flex flex-col gap-2 rounded-md bg-muted/60 p-2">
         <div className="flex items-center gap-3">
-          {video && !playing && (
-            <VideoThumbnail video={video} onPlay={() => setPlaying(true)} className="w-28 sm:w-36" />
-          )}
-          <MuscleMap info={info} size="sm" />
-          <p className="min-w-0 text-sm font-medium">
-            {info.main.map((muscle) => MUSCLE_NAMES[muscle]).join(", ")}
-          </p>
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            {video && !playing && (
+              <VideoThumbnail video={video} onPlay={() => setPlaying(true)} className="w-full max-w-60" />
+            )}
+            <p className="text-sm font-medium">
+              {info.main.map((muscle) => MUSCLE_NAMES[muscle]).join(", ")}
+            </p>
+          </div>
+          <MuscleMap info={info} />
         </div>
         {video && playing && <VideoPlayer video={video} onClose={() => setPlaying(false)} />}
         {cues && <FormCues cues={cues} />}

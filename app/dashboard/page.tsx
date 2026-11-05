@@ -111,6 +111,7 @@ export default function DashboardPage() {
             label="Volume, last 30 days"
             value={`${volumeLast30Days(workouts, today).toLocaleString()} lb`}
             note="Working sets only"
+            tone="green"
             className="col-span-2"
           />
         </div>

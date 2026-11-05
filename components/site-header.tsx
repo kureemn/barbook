@@ -25,13 +25,13 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-6 border-b bg-card px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-6 border-b bg-background px-4 sm:px-6 lg:px-8">
       <Link
         href={data?.user ? "/workouts" : "/"}
         className="flex min-h-11 items-center gap-2"
       >
         <EquipmentPicture equipment="barbell" className="h-6 w-8 text-primary" />
-        <span className="font-heading text-2xl font-bold tracking-wide uppercase">Barbook</span>
+        <span className="text-lg font-bold tracking-tight">Barbook</span>
       </Link>
       {data?.user && (
         <nav aria-label="Main" className="hidden h-full md:flex">
@@ -45,7 +45,7 @@ export function SiteHeader() {
                 className={cn(
                   "flex items-center px-3 text-sm font-medium outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
                   active
-                    ? "text-foreground shadow-[inset_0_-3px_0_var(--primary)]"
+                    ? "font-semibold text-primary"
                     : "text-muted-foreground"
                 )}
               >

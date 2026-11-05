@@ -364,7 +364,7 @@ export function WorkoutForm({
           Back to workouts
         </Link>
       )}
-      <h1 className="text-4xl leading-none font-bold tracking-wide uppercase">
+      <h1 className="text-4xl leading-tight font-bold tracking-tight">
         {workout ? "Edit workout" : (template?.name ?? "Workout")}
       </h1>
 
@@ -450,7 +450,7 @@ export function WorkoutForm({
 
         <section aria-labelledby="exercises-heading" className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 id="exercises-heading" className="text-2xl font-semibold tracking-wide uppercase">
+            <h2 id="exercises-heading" className="text-xl font-bold tracking-tight">
               Exercises
             </h2>
             {live && <RestLength timer={timer} />}
@@ -471,7 +471,7 @@ export function WorkoutForm({
             const exerciseError = errors[`sets.${firstSet}.exercise_id`];
             const bodyweightExercise = isBodyweight(nameOf(group.exercise_id));
             return (
-              <fieldset key={group.key} className="rounded-lg border bg-card p-3">
+              <fieldset key={group.key} className="rounded-2xl bg-card p-3">
                 <legend className="sr-only">Exercise {groupIndex + 1}</legend>
                 <div className="grid gap-2">
                   <Label htmlFor={`exercise-${group.key}`} className="sr-only">
@@ -745,7 +745,7 @@ export function WorkoutForm({
             <Button
               type="submit"
               disabled={saving}
-              className="h-12 flex-1 font-heading text-xl font-bold tracking-wide uppercase"
+              className="h-12 flex-1 text-base font-semibold"
             >
               {saving && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
               {live ? "Finish workout" : "Save changes"}

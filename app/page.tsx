@@ -24,7 +24,7 @@ export default function HomePage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-12 sm:py-16">
       <div className="flex flex-col items-start gap-5">
-        <h1 className="text-5xl leading-none font-bold tracking-wide uppercase sm:text-7xl">
+        <h1 className="text-5xl leading-none font-bold tracking-tight sm:text-6xl">
           Log every set. Follow the plan.
         </h1>
         <p className="max-w-md text-balance text-muted-foreground">
@@ -45,23 +45,23 @@ export default function HomePage() {
       </div>
 
       <ul className="grid gap-3 sm:grid-cols-3">
-        <li className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+        <li className="flex flex-col gap-3 rounded-2xl bg-card p-4">
           <CalendarDays className="size-10 text-primary" aria-hidden="true" />
-          <h2 className="text-2xl font-semibold tracking-wide uppercase">6-week program</h2>
+          <h2 className="text-xl font-bold tracking-tight">6-week program</h2>
           <p className="text-sm text-muted-foreground">
             Open the app, see today&apos;s session, and start it.
           </p>
         </li>
-        <li className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+        <li className="flex flex-col gap-3 rounded-2xl bg-card p-4">
           <MuscleMap info={squat} />
-          <h2 className="text-2xl font-semibold tracking-wide uppercase">Know what you train</h2>
+          <h2 className="text-xl font-bold tracking-tight">Know what you train</h2>
           <p className="text-sm text-muted-foreground">
             See the muscles and equipment for each exercise.
           </p>
         </li>
-        <li className="flex flex-col gap-3 rounded-lg border bg-card p-4">
+        <li className="flex flex-col gap-3 rounded-2xl bg-card p-4">
           <EquipmentPicture equipment="barbell" className="h-10 w-14 text-primary" />
-          <h2 className="text-2xl font-semibold tracking-wide uppercase">Know what to lift</h2>
+          <h2 className="text-xl font-bold tracking-tight">Know what to lift</h2>
           <p className="text-sm text-muted-foreground">
             Get a suggested weight from what you logged last time.
           </p>

@@ -5,13 +5,16 @@ import Link from "next/link";
 import { ArrowRight, Play, Plus } from "lucide-react";
 import { PageBand } from "@/components/page-band";
 import { BarbellArt } from "@/components/program/barbell-art";
+import { LiftArt } from "@/components/program/lift-art";
 import { PlanVideos } from "@/components/program/plan-videos";
 import { Button } from "@/components/ui/button";
+import type { Lift } from "@/lib/dashboard";
 import { loadActiveRun, type ProgramRun } from "@/lib/program-runs";
 import {
   getProgram,
   nextSession,
   PROGRAMS,
+  sessionLift,
   targetText,
   totalSessions,
 } from "@/lib/programs";
@@ -39,6 +42,7 @@ function Hero({
   href,
   startLabel,
   plates,
+  lift,
   action,
   links,
 }: {
@@ -52,6 +56,8 @@ function Hero({
   href: string;
   startLabel: string;
   plates: number;
+  /** The day's lift, drawn in place of the plain bar. */
+  lift?: Lift | null;
   /** A second way in, under Start workout. */
   action?: ReactNode;
   links: ReactNode;
@@ -65,7 +71,7 @@ function Hero({
             <h2 className="mt-1 text-4xl leading-tight font-bold tracking-tight sm:text-5xl">{title}</h2>
             <p className="mt-1 text-sm">{detail}</p>
             <div className="-mx-4 my-4 overflow-hidden lg:mx-0">
-              <BarbellArt plates={plates} />
+              {lift ? <LiftArt lift={lift} plates={plates} /> : <BarbellArt plates={plates} />}
             </div>
             <Button asChild size="lg" className="h-auto min-h-14 w-full text-base whitespace-normal">
               <Link href={href}>
@@ -206,6 +212,7 @@ export function NextSessionCard() {
       href={`/workouts/new?week=${session.week}&day=${session.day}`}
       startLabel="Start program workout"
       plates={plates}
+      lift={sessionLift(session)}
       action={<OwnWorkoutButton />}
       links={programLink}
     />

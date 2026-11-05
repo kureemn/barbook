@@ -7,6 +7,7 @@ import {
   PROGRAMS,
   programSession,
   scheduleCell,
+  sessionLift,
   targetText,
   totalSessions,
   type Program,
@@ -252,5 +253,26 @@ describe("isSessionKey", () => {
     [NaN, 1],
   ])("rejects week %s, day %s from a hand-edited link", (week, day) => {
     expect(isSessionKey(block, { week, day })).toBe(false);
+  });
+});
+
+describe("sessionLift", () => {
+  const session = (name: string) => ({ exercises: [{ name }, { name: "Deadlift" }] });
+
+  it("names the lift from the first exercise only", () => {
+    expect(sessionLift(session("Squat"))).toBe("squat");
+    expect(sessionLift(session("Pause Bench"))).toBe("bench");
+    expect(sessionLift(session("Romanian Deadlift"))).toBe("deadlift");
+  });
+
+  it("is null when the session starts with something else", () => {
+    expect(sessionLift(session("Military Press"))).toBeNull();
+    expect(sessionLift({ exercises: [] })).toBeNull();
+  });
+
+  it("draws the first week of the 6-week program as squat, bench, deadlift, and bench", () => {
+    const program = getProgram("six-week-strength");
+    const lifts = program.days.map((_, index) => sessionLift(programSession(program, 1, index + 1)));
+    expect(lifts).toEqual(["squat", "bench", "deadlift", "bench"]);
   });
 });

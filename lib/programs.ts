@@ -1,3 +1,5 @@
+import type { Lift } from "@/lib/dashboard";
+
 export const PROGRAM_KEYS = ["six-week-strength", "five-three-one-bbb", "phul"] as const;
 export type ProgramKey = (typeof PROGRAM_KEYS)[number];
 
@@ -375,4 +377,13 @@ export function targetText({ sets, reps, rpe, setTargets }: ProgramExercise) {
     return setTargets.length > 3 ? `${ramp.join(", ")}+, then 5 × 10` : ramp.join(", ");
   }
   return rpe === null ? `${sets} × ${reps}` : `${sets} × ${reps} @ RPE ${rpe}`;
+}
+
+/** The lift a session is built around, from its first exercise. Null if it's something else. */
+export function sessionLift(session: { exercises: { name: string }[] }): Lift | null {
+  const first = session.exercises[0]?.name.toLowerCase() ?? "";
+  if (first.includes("squat")) return "squat";
+  if (first.includes("bench")) return "bench";
+  if (first.includes("deadlift")) return "deadlift";
+  return null;
 }

@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, Play, Plus } from "lucide-react";
 import { BarbellArt } from "@/components/program/barbell-art";
+import { PlanVideos } from "@/components/program/plan-videos";
 import { Button } from "@/components/ui/button";
 import { loadActiveRun, type ProgramRun } from "@/lib/program-runs";
 import {
@@ -13,7 +14,6 @@ import {
   targetText,
   totalSessions,
 } from "@/lib/programs";
-import { cn } from "@/lib/utils";
 
 const SURFACE = "overflow-hidden rounded-3xl bg-tint-peach text-tint-peach-foreground";
 const PLATES_WITHOUT_PROGRAM = 3;
@@ -34,7 +34,7 @@ function Hero({
   eyebrow,
   title,
   detail,
-  wideDetail,
+  side,
   wideSide,
   href,
   startLabel,
@@ -46,8 +46,8 @@ function Hero({
   eyebrow?: string;
   title: string;
   detail: string;
-  /** Replaces the detail on a large screen, when the side panel already covers it. */
-  wideDetail?: string;
+  /** Beside the card on a large screen, and under it on a phone. */
+  side?: ReactNode;
   wideSide?: ReactNode;
   href: string;
   startLabel: string;
@@ -59,14 +59,13 @@ function Hero({
   return (
     <section aria-label={label} className="lg:grid lg:grid-cols-2 lg:gap-12">
       <div>
-        <div className={cn(SURFACE, "p-5")}>
+        <div className={`${SURFACE} p-5`}>
           <div className="-mx-5">
             <BarbellArt plates={plates} />
           </div>
           {eyebrow && <p className="mt-4 text-sm font-medium">{eyebrow}</p>}
           <h2 className="mt-1 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">{title}</h2>
-          <p className={cn("mt-2 text-sm", wideDetail && "lg:hidden")}>{detail}</p>
-          {wideDetail && <p className="mt-2 hidden text-sm lg:block">{wideDetail}</p>}
+          <p className="mt-2 text-sm">{detail}</p>
         </div>
         <Button asChild size="lg" className="mt-3 h-auto min-h-14 w-full text-base whitespace-normal">
           <Link href={href}>
@@ -77,6 +76,7 @@ function Hero({
         {action}
         <div className="mt-2 flex flex-wrap justify-between gap-x-4">{links}</div>
       </div>
+      {side && <div className="mt-6 min-w-0 lg:mt-0">{side}</div>}
       {wideSide && <div className="hidden lg:block">{wideSide}</div>}
     </section>
   );
@@ -187,15 +187,13 @@ export function NextSessionCard() {
       label="Your next session"
       eyebrow={`${program.name} · Week ${session.week}, Day ${session.day}${session.week === program.deloadWeek ? " · Deload" : ""}`}
       title={session.name}
-      detail={`${session.exercises.map((exercise) => exercise.name).join(", ")}. ${logged} of ${total} sessions logged.`}
-      wideDetail={`${logged} of ${total} sessions logged.`}
-      wideSide={
-        <SideList
-          heading="Today's plan"
-          rows={session.exercises.map((exercise) => [
-            exercise.name,
-            targetText(exercise),
-          ])}
+      detail={`${logged} of ${total} sessions logged.`}
+      side={
+        <PlanVideos
+          rows={session.exercises.map((exercise) => ({
+            name: exercise.name,
+            target: targetText(exercise),
+          }))}
         />
       }
       href={`/workouts/new?week=${session.week}&day=${session.day}`}

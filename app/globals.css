@@ -12,6 +12,8 @@
   --color-tint-peach-foreground: var(--tint-peach-foreground);
   --color-tint-blue: var(--tint-blue);
   --color-tint-blue-foreground: var(--tint-blue-foreground);
+  --color-tint-green: var(--tint-green);
+  --color-tint-green-foreground: var(--tint-green-foreground);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -58,6 +60,8 @@
   --tint-peach-foreground: #5c1f14;
   --tint-blue: #e6eefb;
   --tint-blue-foreground: #1b3f73;
+  --tint-green: #e7f4ec;
+  --tint-green-foreground: #14532d;
   --plate-small: #f4845f;
   --plate-bar: #e9a48c;
   --series-squat: #2470c9;
@@ -91,6 +95,8 @@
   --tint-peach-foreground: #ffd9c8;
   --tint-blue: #1a2a42;
   --tint-blue-foreground: #cfe0fb;
+  --tint-green: #16301f;
+  --tint-green-foreground: #c7ecd3;
   --plate-small: #c9603f;
   --plate-bar: #7a4636;
   --series-squat: #3987e5;

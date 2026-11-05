@@ -21,7 +21,7 @@ export function PlanVideos({ rows }: { rows: { name: string; target: string }[] 
         {rows.map(({ name, target }) => {
           const rowVideo = exerciseVideo(name);
           return (
-            <li key={name} className="w-40 shrink-0 lg:flex lg:w-auto lg:items-center lg:gap-4 lg:border-t lg:py-2.5">
+            <li key={name} className="w-40 shrink-0 lg:flex lg:w-auto lg:items-center lg:gap-4 lg:border-t lg:border-tint-peach-foreground/15 lg:py-2.5">
               {rowVideo ? (
                 <VideoThumbnail
                   video={rowVideo}
@@ -29,11 +29,11 @@ export function PlanVideos({ rows }: { rows: { name: string; target: string }[] 
                   className="w-full rounded-xl lg:w-28"
                 />
               ) : (
-                <div aria-hidden="true" className="aspect-video w-full shrink-0 rounded-xl bg-muted lg:w-28" />
+                <div aria-hidden="true" className="aspect-video w-full shrink-0 rounded-xl bg-background lg:w-28" />
               )}
               <p className="mt-2 min-w-0 lg:mt-0">
                 <span className="block text-sm font-medium">{name}</span>
-                <span className="block text-sm text-muted-foreground tabular-nums">{target}</span>
+                <span className="block text-sm tabular-nums">{target}</span>
               </p>
             </li>
           );

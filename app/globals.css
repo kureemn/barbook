@@ -12,6 +12,8 @@
   --color-tint-peach-foreground: var(--tint-peach-foreground);
   --color-tint-blue: var(--tint-blue);
   --color-tint-blue-foreground: var(--tint-blue-foreground);
+  --color-tint-orange: var(--tint-orange);
+  --color-tint-orange-foreground: var(--tint-orange-foreground);
   --color-tint-green: var(--tint-green);
   --color-tint-green-foreground: var(--tint-green-foreground);
   --color-ring: var(--ring);
@@ -60,6 +62,8 @@
   --tint-peach-foreground: #5c1f14;
   --tint-blue: #e6eefb;
   --tint-blue-foreground: #1b3f73;
+  --tint-orange: #fcd9c0;
+  --tint-orange-foreground: #7c2d12;
   --tint-green: #e7f4ec;
   --tint-green-foreground: #14532d;
   --plate-small: #f4845f;
@@ -95,6 +99,8 @@
   --tint-peach-foreground: #ffd9c8;
   --tint-blue: #1a2a42;
   --tint-blue-foreground: #cfe0fb;
+  --tint-orange: #43240f;
+  --tint-orange-foreground: #fed7aa;
   --tint-green: #16301f;
   --tint-green-foreground: #c7ecd3;
   --plate-small: #c9603f;

@@ -19,7 +19,7 @@ export function HomeStats() {
   if (!workouts) return null;
 
   return (
-    <section aria-label="Your training so far" className="mt-6">
+    <section aria-label="Your training so far">
       <TrainingStats workouts={workouts} />
     </section>
   );

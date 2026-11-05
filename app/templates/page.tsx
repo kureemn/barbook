@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ClipboardList, Loader2, Pencil, Play, Plus, Trash2 } from "lucide-react";
+import { PageBand } from "@/components/page-band";
 import { EmptyState } from "@/components/empty-state";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -53,17 +54,21 @@ export default function TemplatesPage() {
   if (status !== "authed" || !templates) return <PageLoading />;
 
   return (
-    <main className={PAGE_CLASS}>
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-4xl font-bold tracking-tight">Templates</h1>
-        <Button asChild>
-          <Link href="/templates/new">
-            <Plus className="size-4" aria-hidden="true" />
-            New template
-          </Link>
-        </Button>
-      </div>
+    <main className="flex-1">
+      <PageBand>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-4xl font-bold tracking-tight">Templates</h1>
+          <Button asChild>
+            <Link href="/templates/new">
+              <Plus className="size-4" aria-hidden="true" />
+              New template
+            </Link>
+          </Button>
+        </div>
+      </PageBand>
       <WorkoutNav current="/templates" />
+
+      <div className={PAGE_CLASS}>
 
       {templates.length === 0 ? (
         <EmptyState
@@ -153,6 +158,7 @@ export default function TemplatesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </main>
   );
 }

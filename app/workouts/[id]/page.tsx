@@ -77,7 +77,7 @@ export default function WorkoutDetailPage() {
       </Link>
 
       <div className="mt-2 flex items-start justify-between gap-3">
-        <h1 className="text-4xl font-bold tracking-wide uppercase">{workout.title}</h1>
+        <h1 className="text-4xl font-bold tracking-tight">{workout.title}</h1>
         <StarButton
           workoutId={workout.id}
           title={workout.title}
@@ -88,28 +88,28 @@ export default function WorkoutDetailPage() {
         {formatDate(workout.performed_on)}
       </p>
       <dl className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <div className="rounded-lg border bg-card p-3">
+        <div className="rounded-2xl bg-card p-3">
           <dt className="text-sm text-muted-foreground">Working volume</dt>
-          <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
+          <dd className="mt-1 text-2xl font-bold tracking-tight tabular-nums">
             {workoutVolume(workout.workout_sets).toLocaleString()} lb
           </dd>
         </div>
-        <div className="rounded-lg border bg-card p-3">
+        <div className="rounded-2xl bg-card p-3">
           <dt className="text-sm text-muted-foreground">Working sets</dt>
-          <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
+          <dd className="mt-1 text-2xl font-bold tracking-tight tabular-nums">
             {workout.workout_sets.filter((set) => !set.is_warmup).length}
           </dd>
         </div>
-        <div className="rounded-lg border bg-card p-3">
+        <div className="rounded-2xl bg-card p-3">
           <dt className="text-sm text-muted-foreground">Exercises</dt>
-          <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
+          <dd className="mt-1 text-2xl font-bold tracking-tight tabular-nums">
             {groupByExercise(workout.workout_sets).length}
           </dd>
         </div>
         {workout.bodyweight !== null && (
-          <div className="rounded-lg border bg-card p-3">
+          <div className="rounded-2xl bg-card p-3">
             <dt className="text-sm text-muted-foreground">Bodyweight</dt>
-            <dd className="mt-1 font-heading text-3xl font-bold tabular-nums">
+            <dd className="mt-1 text-2xl font-bold tracking-tight tabular-nums">
               {Number(workout.bodyweight)} lb
             </dd>
           </div>
@@ -131,8 +131,8 @@ export default function WorkoutDetailPage() {
 
       <div className="mt-6 grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {groupByExercise(workout.workout_sets).map((group) => (
-          <section key={group.sets[0].id} className="rounded-lg border bg-card p-4">
-            <h2 className="text-2xl font-semibold tracking-wide uppercase">
+          <section key={group.sets[0].id} className="rounded-2xl bg-card p-4">
+            <h2 className="text-xl font-bold tracking-tight">
               {group.sets[0].exercises?.name ?? "Exercise"}
             </h2>
             <div className="mt-3 empty:hidden">
@@ -166,7 +166,7 @@ export default function WorkoutDetailPage() {
 
       {workout.notes && (
         <section className="mt-6">
-          <h2 className="text-2xl font-semibold tracking-wide uppercase">Notes</h2>
+          <h2 className="text-xl font-bold tracking-tight">Notes</h2>
           <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{workout.notes}</p>
         </section>
       )}

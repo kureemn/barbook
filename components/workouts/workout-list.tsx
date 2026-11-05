@@ -81,8 +81,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
 
   return (
     <main className={PAGE_CLASS}>
-      {/* The hero leads this page, so its title only needs to reach screen readers. */}
-      <h1 className={starredOnly ? "text-4xl font-bold tracking-wide uppercase" : "sr-only"}>
+      <h1 className="mb-6 text-4xl font-bold tracking-tight">
         {starredOnly ? "Starred workouts" : "Workouts"}
       </h1>
 
@@ -96,7 +95,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
           </>
         )}
 
-        <section aria-label={starredOnly ? "Starred workouts" : "Workout history"} className={starredOnly ? "mt-6" : "mt-8"}>
+        <section aria-label={starredOnly ? "Starred workouts" : "Workout history"} className={starredOnly ? undefined : "mt-8"}>
           {workouts.length === 0 ? (
             starredOnly ? (
               <EmptyState
@@ -121,7 +120,7 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
               <div className="lg:flex lg:items-start lg:justify-between lg:gap-8">
               <div className="flex items-baseline justify-between gap-4 lg:justify-start">
                 {!starredOnly && (
-                  <h2 className="text-3xl font-bold tracking-wide uppercase">History</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">History</h2>
                 )}
                 <p role="status" className="text-sm text-muted-foreground tabular-nums">
                   {narrowed
@@ -233,16 +232,14 @@ function WorkoutListContent({ starredOnly }: { starredOnly: boolean }) {
                     <li key={workout.id} className="relative border-t">
                       <Link
                         href={`/workouts/${workout.id}`}
-                        className="flex gap-4 rounded-md py-4 pr-12 transition-colors outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
+                        className="flex gap-4 rounded-md py-3 pr-12 transition-colors outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
                       >
-                        <span aria-hidden="true" className="flex w-11 shrink-0 flex-col items-center">
-                          <span className="text-xs font-medium text-muted-foreground uppercase">
-                            {date.month}
-                          </span>
-                          <span className="font-heading text-4xl leading-none font-bold">{date.day}</span>
+                        <span aria-hidden="true" className="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl bg-tint-peach text-tint-peach-foreground">
+                          <span className="text-[11px] leading-tight font-medium">{date.month}</span>
+                          <span className="text-lg leading-tight font-bold">{date.day}</span>
                         </span>
                         <span className="min-w-0">
-                          <span className="block font-heading text-2xl leading-tight font-semibold tracking-wide uppercase">
+                          <span className="block text-base leading-tight font-semibold">
                             {workout.title}
                           </span>
                           <span className="sr-only">{formatDate(workout.performed_on)}. </span>

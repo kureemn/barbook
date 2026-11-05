@@ -14,9 +14,9 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="mt-6 flex flex-col items-start gap-3 rounded-lg border bg-card p-6 lg:p-10">
+    <div className="mt-6 flex flex-col items-start gap-3 rounded-2xl bg-card p-6 lg:p-10">
       <Icon className="size-10 text-primary" aria-hidden="true" />
-      <h2 className="text-3xl font-bold tracking-wide uppercase">{title}</h2>
+      <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
       <p className="max-w-prose text-muted-foreground">{children}</p>
       {action}
     </div>

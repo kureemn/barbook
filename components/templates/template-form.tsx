@@ -104,7 +104,7 @@ export function TemplateForm({ template }: { template?: Template }) {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <h1 className="text-4xl font-bold tracking-wide uppercase">
+      <h1 className="text-4xl font-bold tracking-tight">
         {template ? "Edit template" : "New template"}
       </h1>
 
@@ -135,7 +135,7 @@ export function TemplateForm({ template }: { template?: Template }) {
           {rows.map((row, index) => {
             const path = `exercises.${index}`;
             return (
-              <fieldset key={row.key} className="rounded-lg border bg-card p-4">
+              <fieldset key={row.key} className="rounded-2xl bg-card p-4">
                 <legend className="px-1 text-sm font-medium">Exercise {index + 1}</legend>
                 <div className="grid gap-2">
                   <Label htmlFor={`exercise-${row.key}`}>Exercise</Label>

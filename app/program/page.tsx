@@ -31,7 +31,7 @@ import {
 import { PAGE_CLASS } from "@/lib/utils";
 import { formatDate, todayLocal } from "@/lib/workouts";
 
-const BIG_BUTTON = "h-16 w-full px-8 font-heading text-2xl font-bold tracking-wide uppercase lg:w-auto";
+const BIG_BUTTON = "h-14 w-full px-8 text-base font-semibold lg:w-auto";
 
 /** Where a program came from, so nobody mistakes it for more than it is. */
 function ProgramOrigin({ program }: { program: Program }) {
@@ -65,9 +65,9 @@ function ProgramDays({ program }: { program: Program }) {
   return (
     <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {program.days.map((plan, index) => (
-        <li key={plan.name} className="rounded-lg border bg-card p-3 lg:p-4">
-          <p className="text-xs font-medium text-muted-foreground uppercase">Day {index + 1}</p>
-          <h3 className="font-heading text-2xl leading-tight font-bold tracking-wide uppercase">
+        <li key={plan.name} className="rounded-2xl bg-card p-3 lg:p-4">
+          <p className="text-xs font-medium text-muted-foreground">Day {index + 1}</p>
+          <h3 className="text-lg leading-tight font-semibold tracking-tight">
             {plan.name}
           </h3>
           <ul className="mt-2 flex flex-col gap-1 text-sm">
@@ -93,7 +93,7 @@ function ChooseProgram({
 }) {
   return (
     <>
-      <h1 className="text-4xl font-bold tracking-wide uppercase lg:text-6xl">Choose a program</h1>
+      <h1 className="text-4xl font-bold tracking-tight">Choose a program</h1>
       <WorkoutNav current="/program" />
       <p className="mt-2 max-w-prose text-muted-foreground">
         All of them are 4 days a week and use barbells, dumbbells, a bench, a rack, and a pull-up
@@ -104,10 +104,10 @@ function ChooseProgram({
           <li key={program.key} className="rounded-xl border bg-muted/40 p-4 lg:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+                <p className="text-sm font-medium text-muted-foreground">
                   {program.focus} · {program.weeks} weeks
                 </p>
-                <h2 className="mt-1 text-4xl font-bold tracking-wide uppercase">{program.name}</h2>
+                <h2 className="mt-1 text-4xl font-bold tracking-tight">{program.name}</h2>
                 <p className="mt-2 max-w-prose">{program.summary}</p>
               </div>
               <Button
@@ -207,7 +207,7 @@ export default function ProgramPage() {
     <main className={PAGE_CLASS}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
         <div className="min-w-0 flex-1">
-          <h1 className="text-4xl font-bold tracking-wide uppercase lg:text-6xl">{program.name}</h1>
+          <h1 className="text-4xl font-bold tracking-tight">{program.name}</h1>
           <WorkoutNav current="/program" />
           <p className="mt-2 text-muted-foreground">
             {program.focus}. Started {formatDate(run.started_on)}.
@@ -231,7 +231,7 @@ export default function ProgramPage() {
       </div>
 
       <section aria-labelledby="schedule-heading" className="mt-8">
-        <h2 id="schedule-heading" className="text-2xl font-semibold tracking-wide uppercase">
+        <h2 id="schedule-heading" className="text-xl font-bold tracking-tight">
           The {program.weeks} weeks
         </h2>
         <ProgramSchedule program={program} logged={run.program_sessions} />

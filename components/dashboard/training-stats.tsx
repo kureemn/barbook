@@ -9,28 +9,41 @@ import {
 import { cn } from "@/lib/utils";
 import { todayLocal } from "@/lib/workouts";
 
-export function Stat({ label, value, note }: { label: string; value: ReactNode; note?: string }) {
+const TONES = {
+  plain: "bg-card",
+  peach: "bg-tint-peach text-tint-peach-foreground",
+  blue: "bg-tint-blue text-tint-blue-foreground",
+};
+
+export function Stat({
+  label,
+  value,
+  note,
+  tone = "plain",
+  className,
+}: {
+  label: string;
+  value: ReactNode;
+  note?: string;
+  tone?: keyof typeof TONES;
+  className?: string;
+}) {
+  const quiet = tone === "plain" && "text-muted-foreground";
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="mt-1 font-heading text-4xl font-bold tabular-nums">{value}</dd>
-      {note && <dd className="mt-1 text-sm text-muted-foreground">{note}</dd>}
+    <div className={cn("rounded-2xl p-4", TONES[tone], className)}>
+      <dt className={cn("text-sm", quiet)}>{label}</dt>
+      <dd className="mt-1 text-2xl font-bold tracking-tight tabular-nums">{value}</dd>
+      {note && <dd className={cn("mt-1 text-sm", quiet)}>{note}</dd>}
     </div>
   );
 }
 
-export function TrainingStats({
-  workouts,
-  extra,
-}: {
-  workouts: DashboardWorkout[];
-  extra?: ReactNode;
-}) {
+export function TrainingStats({ workouts }: { workouts: DashboardWorkout[] }) {
   const today = todayLocal();
   const total = bestEstimatedTotal(e1rmHistory(workouts));
 
   return (
-    <dl className={cn("grid gap-3", extra ? "grid-cols-2 lg:grid-cols-5 [&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1" : "sm:grid-cols-3")}>
+    <dl className="grid gap-3 sm:grid-cols-3">
       <Stat label="Workouts this month" value={workoutsThisMonth(workouts, today)} />
       <Stat
         label="Volume, last 30 days"
@@ -42,7 +55,6 @@ export function TrainingStats({
         value={total === null ? "Not yet" : `${Math.round(total).toLocaleString()} lb`}
         note={total === null ? "Log squat, bench, and deadlift to see this" : "Best of each lift, added"}
       />
-      {extra}
     </dl>
   );
 }

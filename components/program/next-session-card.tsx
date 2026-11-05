@@ -15,7 +15,7 @@ import {
 } from "@/lib/programs";
 import { cn } from "@/lib/utils";
 
-const SURFACE = "overflow-hidden rounded-xl bg-primary text-primary-foreground";
+const SURFACE = "overflow-hidden rounded-3xl bg-tint-peach text-tint-peach-foreground";
 const PLATES_WITHOUT_PROGRAM = 3;
 
 function HeroLink({ href, children }: { href: string; children: ReactNode }) {
@@ -57,33 +57,27 @@ function Hero({
   links: ReactNode;
 }) {
   return (
-    <section aria-label={label} className={SURFACE}>
-      <div className="-mx-6 pt-5">
-        <BarbellArt plates={plates} />
-      </div>
-      <div className="p-5 pt-4 sm:p-6 sm:pt-5 lg:grid lg:grid-cols-2 lg:gap-12 lg:p-8 lg:pt-6">
-        <div>
-          {eyebrow && <p className="text-sm font-semibold tracking-wider uppercase">{eyebrow}</p>}
-          <h2 className="mt-1 text-6xl leading-[0.9] font-bold tracking-wide uppercase sm:text-7xl lg:text-8xl">
-            {title}
-          </h2>
-          <p className={cn("mt-3 text-sm", wideDetail && "lg:hidden")}>{detail}</p>
-          {wideDetail && <p className="mt-3 hidden text-sm lg:block">{wideDetail}</p>}
-          <Button
-            asChild
-            size="lg"
-            className="mt-5 h-auto min-h-16 w-full bg-foreground font-heading text-xl font-bold whitespace-normal sm:text-2xl tracking-wide text-background uppercase hover:bg-foreground/85"
-          >
-            <Link href={href}>
-              <Play className="size-5 fill-current" aria-hidden="true" />
-              {startLabel}
-            </Link>
-          </Button>
-          {action}
-          <div className="mt-2 flex flex-wrap justify-between gap-x-4">{links}</div>
+    <section aria-label={label} className="lg:grid lg:grid-cols-2 lg:gap-12">
+      <div>
+        <div className={cn(SURFACE, "p-5")}>
+          <div className="-mx-5">
+            <BarbellArt plates={plates} />
+          </div>
+          {eyebrow && <p className="mt-4 text-sm font-medium">{eyebrow}</p>}
+          <h2 className="mt-1 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">{title}</h2>
+          <p className={cn("mt-2 text-sm", wideDetail && "lg:hidden")}>{detail}</p>
+          {wideDetail && <p className="mt-2 hidden text-sm lg:block">{wideDetail}</p>}
         </div>
-        {wideSide && <div className="hidden lg:block">{wideSide}</div>}
+        <Button asChild size="lg" className="mt-3 h-auto min-h-14 w-full text-base whitespace-normal">
+          <Link href={href}>
+            <Play className="size-4 fill-current" aria-hidden="true" />
+            {startLabel}
+          </Link>
+        </Button>
+        {action}
+        <div className="mt-2 flex flex-wrap justify-between gap-x-4">{links}</div>
       </div>
+      {wideSide && <div className="hidden lg:block">{wideSide}</div>}
     </section>
   );
 }
@@ -92,18 +86,13 @@ function Hero({
 function OwnWorkoutButton() {
   return (
     <>
-      <Button
-        asChild
-        variant="outline"
-        size="lg"
-        className="mt-2 w-full border-primary-foreground bg-transparent font-semibold text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground dark:border-primary-foreground dark:bg-transparent dark:hover:bg-primary-foreground/15"
-      >
+      <Button asChild variant="secondary" size="lg" className="mt-2 min-h-14 w-full text-base">
         <Link href="/workouts/new">
-          <Plus className="size-5" aria-hidden="true" />
+          <Plus className="size-5 text-primary" aria-hidden="true" />
           Start my own workout
         </Link>
       </Button>
-      <p className="mt-2 text-sm">Choose your own exercises, or log a past workout.</p>
+      <p className="mt-2 text-center text-sm text-muted-foreground">Choose your own exercises, or log a past workout.</p>
     </>
   );
 }
@@ -111,15 +100,15 @@ function OwnWorkoutButton() {
 function SideList({ heading, rows }: { heading: string; rows: [string, string?][] }) {
   return (
     <>
-      <h3 className="font-heading text-2xl font-bold tracking-wide uppercase">{heading}</h3>
+      <h3 className="text-xl font-bold tracking-tight">{heading}</h3>
       <ul className="mt-3">
         {rows.map(([name, target]) => (
           <li
             key={name}
-            className="flex items-baseline justify-between gap-4 border-t border-primary-foreground/30 py-2.5"
+            className="flex items-baseline justify-between gap-4 border-t py-2.5"
           >
             <span className="font-medium">{name}</span>
-            {target && <span className="shrink-0 text-sm tabular-nums">{target}</span>}
+            {target && <span className="shrink-0 text-sm text-muted-foreground tabular-nums">{target}</span>}
           </li>
         ))}
       </ul>
@@ -138,7 +127,7 @@ export function NextSessionCard() {
       .catch(() => setRun(null));
   }, []);
 
-  if (run === undefined) return <div className={`${SURFACE} h-96`} aria-hidden="true" />;
+  if (run === undefined) return <div className={`${SURFACE} h-64`} aria-hidden="true" />;
 
   const programLink = (
     <HeroLink href="/program">

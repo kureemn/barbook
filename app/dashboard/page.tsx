@@ -6,14 +6,17 @@ import { ChartLine, Minus, TrendingDown, TrendingUp, Trophy } from "lucide-react
 import { E1rmChart } from "@/components/dashboard/e1rm-chart";
 import { BarTrend } from "@/components/dashboard/bar-trend";
 import { MuscleBalance } from "@/components/dashboard/muscle-balance";
-import { Stat, TrainingStats } from "@/components/dashboard/training-stats";
+import { Stat } from "@/components/dashboard/training-stats";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { PageError, PageLoading } from "@/components/workouts/page-states";
 import { WorkoutNav } from "@/components/workouts/workout-nav";
 import {
+  bestEstimatedTotal,
   e1rmHistory,
   LIFTS,
+  volumeLast30Days,
+  workoutsThisMonth,
   type DashboardWorkout,
 } from "@/lib/dashboard";
 import { useRequireAuth } from "@/lib/neon/use-auth-guard";
@@ -72,37 +75,46 @@ export default function DashboardPage() {
     label: shortDate(week.weekStart),
   }));
   const streak = weekStreak(workouts, today);
+  const total = bestEstimatedTotal(history);
   const strength = strengthRatio(workouts, today);
   const { muscles, uncounted } = setsByMuscle(workouts, today);
 
   return (
     <main className={PAGE_CLASS}>
-      <h1 className="text-4xl font-bold tracking-wide uppercase">Dashboard</h1>
+      <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
       <WorkoutNav current="/dashboard" />
 
-      <div className="mt-6">
-        <TrainingStats
-          workouts={workouts}
-          extra={
-            <>
-              <Stat
-                label="Weeks in a row"
-                value={streak}
-                note={streak === 0 ? "Log a workout to start" : "With at least one workout"}
-              />
-              <Stat
-                label="Total vs. bodyweight"
-                value={strength ? `${strength.ratio.toFixed(2)}×` : "Not yet"}
-                note={
-                  strength
-                    ? `At ${strength.bodyweight} lb, logged ${shortDate(strength.date)}`
-                    : "Log all 3 lifts and your bodyweight"
-                }
-              />
-            </>
-          }
-        />
-      </div>
+      <dl className="mt-6 grid gap-3 lg:grid-cols-[5fr_4fr]">
+        <div className="rounded-3xl bg-primary p-5 text-primary-foreground lg:p-6">
+          <dt className="text-sm">Best estimated total</dt>
+          <dd className="mt-1 text-5xl font-bold tracking-tight tabular-nums lg:text-6xl">
+            {total === null ? "Not yet" : `${Math.round(total).toLocaleString()} lb`}
+          </dd>
+          <dd className="mt-2 text-sm">
+            {total === null ? "Log squat, bench, and deadlift to see this" : "Best of each lift, added"}
+          </dd>
+          <dd className="mt-1 text-sm">
+            {strength
+              ? `${strength.ratio.toFixed(2)}× your bodyweight, at ${strength.bodyweight} lb, logged ${shortDate(strength.date)}`
+              : "Log all 3 lifts and your bodyweight to compare them"}
+          </dd>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Stat label="Workouts this month" value={workoutsThisMonth(workouts, today)} tone="peach" />
+          <Stat
+            label="Weeks in a row"
+            value={streak}
+            note={streak === 0 ? "Log a workout to start" : "With at least one workout"}
+            tone="blue"
+          />
+          <Stat
+            label="Volume, last 30 days"
+            value={`${volumeLast30Days(workouts, today).toLocaleString()} lb`}
+            note="Working sets only"
+            className="col-span-2"
+          />
+        </div>
+      </dl>
 
       {workouts.length === 0 ? (
         <EmptyState
@@ -119,14 +131,14 @@ export default function DashboardPage() {
       ) : (
         <>
           <section aria-labelledby="lifts-heading" className="mt-8">
-            <h2 id="lifts-heading" className="text-2xl font-semibold tracking-wide uppercase">
+            <h2 id="lifts-heading" className="text-xl font-bold tracking-tight">
               Your lifts
             </h2>
-            <ul className="mt-3 grid gap-3 lg:grid-cols-3">
+            <ul className="mt-3 grid gap-6 lg:grid-cols-3">
               {LIFTS.map((lift) => {
                 const summary = summaries.find((item) => item.category === lift.category);
                 return (
-                  <li key={lift.category} className="rounded-lg border bg-card p-4">
+                  <li key={lift.category} className="border-t pt-3">
                     <h3 className="flex items-center gap-2 text-sm font-medium">
                       <span
                         aria-hidden="true"
@@ -137,7 +149,7 @@ export default function DashboardPage() {
                     </h3>
                     {summary ? (
                       <>
-                        <p className="mt-1 font-heading text-5xl font-bold tabular-nums">
+                        <p className="mt-1 text-4xl font-bold tracking-tight tabular-nums">
                           {Math.round(summary.best)} lb
                         </p>
                         <p className="text-sm text-muted-foreground">Best estimated 1-rep max</p>
@@ -163,7 +175,7 @@ export default function DashboardPage() {
 
           <div className="mt-8 grid items-start gap-8 lg:grid-cols-3">
             <section aria-labelledby="e1rm-heading" className="min-w-0 lg:col-span-2">
-              <h2 id="e1rm-heading" className="text-2xl font-semibold tracking-wide uppercase">
+              <h2 id="e1rm-heading" className="text-xl font-bold tracking-tight">
                 Estimated 1-rep max (lb)
               </h2>
               {history.length === 0 ? (
@@ -176,7 +188,7 @@ export default function DashboardPage() {
                     The best working set of each lift per day, using weight, reps, and RPE. A set
                     without RPE counts as RPE 10.
                   </p>
-                  <div className="mt-3 rounded-lg border bg-card p-4">
+                  <div className="mt-3 rounded-2xl bg-card p-4">
                     <E1rmChart history={history} />
                   </div>
                     <details className="mt-3">
@@ -222,25 +234,27 @@ export default function DashboardPage() {
             </section>
 
             <section aria-labelledby="records-heading">
-              <h2 id="records-heading" className="text-2xl font-semibold tracking-wide uppercase">
+              <h2 id="records-heading" className="text-xl font-bold tracking-tight">
                 Recent records
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Days you beat your best estimated 1-rep max for any exercise.
               </p>
               {records.length === 0 ? (
-                <p className="mt-3 rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+                <p className="mt-3 rounded-2xl bg-card p-4 text-sm text-muted-foreground">
                   No records yet. The first time you log an exercise sets your baseline, so beat it
                   next time.
                 </p>
               ) : (
-                <ul className="mt-3 flex flex-col gap-2">
+                <ul className="mt-2">
                   {records.map((record) => (
                     <li
                       key={`${record.exercise}-${record.date}`}
-                      className="flex items-center gap-3 rounded-lg border bg-card p-3"
+                      className="flex items-center gap-3 border-b py-2.5 last:border-b-0"
                     >
-                      <Trophy className="size-5 shrink-0 text-primary" aria-hidden="true" />
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-tint-peach text-primary">
+                        <Trophy className="size-5" aria-hidden="true" />
+                      </span>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium">{record.exercise}</p>
                         <p className="text-sm text-muted-foreground tabular-nums">
@@ -259,13 +273,13 @@ export default function DashboardPage() {
 
           <div className="mt-8 grid items-start gap-8 lg:grid-cols-2">
             <section aria-labelledby="volume-heading" className="min-w-0">
-              <h2 id="volume-heading" className="text-2xl font-semibold tracking-wide uppercase">
+              <h2 id="volume-heading" className="text-xl font-bold tracking-tight">
                 Weekly volume
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Weight × reps across working sets, last 8 weeks.
               </p>
-              <div className="mt-3 rounded-lg border bg-card p-4">
+              <div className="mt-3 rounded-2xl bg-card p-4">
                 <BarTrend
                   data={weeks.map((week) => ({ label: week.label, value: week.volume }))}
                   valueName="Volume"
@@ -275,13 +289,13 @@ export default function DashboardPage() {
               </div>
             </section>
             <section aria-labelledby="sessions-heading" className="min-w-0">
-              <h2 id="sessions-heading" className="text-2xl font-semibold tracking-wide uppercase">
+              <h2 id="sessions-heading" className="text-xl font-bold tracking-tight">
                 Sessions per week
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 How consistently you&apos;ve trained, last 8 weeks.
               </p>
-              <div className="mt-3 rounded-lg border bg-card p-4">
+              <div className="mt-3 rounded-2xl bg-card p-4">
                 <BarTrend
                   data={weeks.map((week) => ({ label: week.label, value: week.sessions }))}
                   valueName="Sessions"
@@ -293,14 +307,14 @@ export default function DashboardPage() {
           </div>
 
           <section aria-labelledby="muscles-heading" className="mt-8">
-            <h2 id="muscles-heading" className="text-2xl font-semibold tracking-wide uppercase">
+            <h2 id="muscles-heading" className="text-xl font-bold tracking-tight">
               Sets per muscle
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Working sets in the last 30 days, counting each exercise&apos;s main muscles. A 0 may
               be something you&apos;re neglecting.
             </p>
-            <div className="mt-3 rounded-lg border bg-card p-4">
+            <div className="mt-3 rounded-2xl bg-card p-4">
               <MuscleBalance muscles={muscles} uncounted={uncounted} />
             </div>
           </section>
